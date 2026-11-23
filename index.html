@@ -148,7 +148,30 @@ details.cheat[open] summary{margin-bottom:10px}
 .stat b{font-family:var(--f-pixel);font-weight:400;font-size:15px;color:var(--yellow);font-variant-numeric:tabular-nums}
 .rank{font-family:var(--f-pixel);font-size:44px;color:var(--yellow);text-shadow:3px 3px 0 var(--red),6px 6px 0 var(--ink);line-height:1}
 
+.lvrow{display:flex;gap:5px;align-items:center;margin-top:5px;font-size:clamp(7px,1.6vw,10px);color:var(--blue);text-shadow:2px 2px 0 var(--ink)}
+.xp{position:relative;width:clamp(30px,9vw,60px);height:5px;background:var(--ink);border:1px solid var(--paper)}
+.xp i{position:absolute;left:0;top:0;bottom:0;display:block;background:var(--blue)}
+.tier{font-family:var(--f-pixel);font-size:9px;letter-spacing:.08em;padding:5px 7px;color:var(--ink);background:var(--steel)}
+.tier.t1{background:var(--blue)}
+.tier.t2{background:var(--pink)}
+.tier.t3{background:var(--yellow);box-shadow:3px 3px 0 var(--red)}
+.tiers{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.panel.t1{border-color:var(--blue);background:linear-gradient(#12305c,var(--deep) 55%)}
+.panel.t2{border-color:var(--pink);background:linear-gradient(#3a1446,var(--deep) 60%)}
+.panel.t3{border-color:var(--yellow);background:linear-gradient(#5a3208,#3a1446 40%,var(--deep) 80%);animation:legend .9s steps(2) infinite}
+@keyframes legend{50%{border-color:var(--orange)}}
+.panel.t1 .ans{border-color:var(--blue)}
+.panel.t2 .ans{border-color:var(--pink)}
+.panel.t3 .ans{border-color:var(--orange)}
+.panel .ans.ok{border-color:var(--green)}
+.panel .ans.bad{border-color:var(--red)}
+.banner.t1{color:var(--blue);text-shadow:3px 3px 0 var(--night),6px 6px 0 var(--ink)}
+.banner.t2{color:var(--pink);text-shadow:3px 3px 0 var(--plum),6px 6px 0 var(--ink)}
+.float.skill{font-size:clamp(9px,2.2vw,14px);color:var(--orange)}
+.float.skill.t2{color:var(--blue)}
+.float.skill.t3{color:var(--pink)}
 @media (prefers-reduced-motion:reduce){
+  .panel.t3{animation:none}
   .screen.shake,.banner,.float,.timer.low i{animation:none}
   .hpbar i{transition:none}
 }
@@ -167,7 +190,7 @@ details.cheat[open] summary{margin-bottom:10px}
     <canvas id="cv" width="160" height="90" aria-label="ฉากต่อสู้"></canvas>
     <div class="logo" id="logo"><h1>TRIG QUEST</h1><p>ตะลุยปราสาทตรีโกณมิติ</p></div>
     <div class="hud" id="hud" hidden>
-      <div><div class="hearts" id="hearts"></div><div class="combo" id="combo"></div></div>
+      <div><div class="hearts" id="hearts"></div><div class="lvrow"><span id="lv">LV 1</span><span class="xp"><i id="xpFill"></i></span></div><div class="combo" id="combo"></div></div>
       <div class="hud-r"><div class="bname" id="bname"></div><div class="hpbar"><i class="ghost" id="hpGhost"></i><i class="fill" id="hpFill"></i></div></div>
     </div>
     <div class="banner" id="banner" hidden></div>
@@ -355,7 +378,87 @@ function g4inv(){
   return mk(`${f}(${x}) เท่ากับเท่าใด`,a,['π/6','π/3','π/4','π/2','2π/3','−π/6','−π/4','5π/6','π','−π/3','0'],
     `${base}(${a}) = ${x} และ ${a} อยู่ในช่วงค่าหลักของ ${f} คือ ${rng}`);
 }
-const GENS=[[g1ratio,g1ratio,g1side,g1find,g1concept],[g2val,g2val,g2expr,g2rad,g2inv],[g3angle,g3angle,g3pyth,g3iden,g3ref],[g4graph,g4cos,g4area,g4sin,g4double,g4inv]];
+/* Hard tiers (EPIC / LEGEND) */
+function h1mix(){
+  const [a,b,c]=pick(TRIPLES.slice(0,4));const sw=Math.random()<.5;const o=sw?b:a,d=sw?a:b;const k=pick(['sum','prod','sec']);
+  const pre=`ถ้า tan θ = ${o}/${d} และ 0° < θ < 90° แล้ว `,base=`tan θ = ข้าม/ชิด → ข้าม ${o}, ชิด ${d}, ฉาก ${c} · `;
+  if(k==='sum')return mk(pre+'sin θ + cos θ เท่ากับเท่าใด',fr(o+d,c),[fr(o*d,c*c),fr(Math.abs(o-d),c),fr(o+d,d),fr(c,o+d),fr(o,c),fr(d,c)],base+`sin θ + cos θ = ${o}/${c} + ${d}/${c} = ${fr(o+d,c)}`);
+  if(k==='prod')return mk(pre+'sin θ · cos θ เท่ากับเท่าใด',fr(o*d,c*c),[fr(o+d,c),fr(o*d,c),fr(2*o*d,c*c),fr(o,d),fr(o*o,c*c),fr(d*d,c*c)],base+`sin θ · cos θ = (${o}/${c})(${d}/${c}) = ${fr(o*d,c*c)}`);
+  return mk(pre+'sec θ + cosec θ เท่ากับเท่าใด',fr(c*(o+d),o*d),[fr(o+d,c),fr(c,o+d),fr(2*c,o+d),fr(c*c,o*d),fr(c,o),fr(c,d)],base+`sec θ + cosec θ = ${c}/${d} + ${c}/${o} = ${fr(c*(o+d),o*d)}`);
+}
+function h1legend(){
+  const [a,b,c]=pick(TRIPLES.slice(0,4));const sw=Math.random()<.5;const o=sw?b:a,d=sw?a:b;
+  const pre=`ถ้า tan θ = ${o}/${d} และ 0° < θ < 90° แล้ว `;
+  if(Math.random()<.5){const ans=fr(o-d,o+d);return mk(pre+'(sin θ − cos θ) / (sin θ + cos θ) เท่ากับเท่าใด',ans,[fr(o+d,o-d),fr(o-d,c),fr(o*d,c*c),fr(o,d),fr(d,o+d)],`หารทั้งเศษและส่วนด้วย cos θ → (tan θ − 1)/(tan θ + 1) = (${o}/${d} − 1)/(${o}/${d} + 1) = ${ans}`,null,[neg(ans)])}
+  const ans=fr(o*o-d*d,c*c);return mk(pre+'sin²θ − cos²θ เท่ากับเท่าใด',ans,[fr(Math.abs(o-d),c),'1',fr(2*o*d,c*c),fr(o*o,c*c),fr(d*d,c*c)],`sin θ = ${o}/${c}, cos θ = ${d}/${c} → ${o*o}/${c*c} − ${d*d}/${c*c} = ${ans}`,null,[neg(ans)]);
+}
+function h2word(){
+  const k=ri(2,8),d=3*k,ang=pick([30,45,60]);
+  if(Math.random()<.5){const ans={30:`${k}√3`,45:`${d}`,60:`${d}√3`}[ang];const t={30:'√3/3',45:'1',60:'√3'}[ang];
+    return mk(`ยืนห่างจากโคนเสาธง ${d} เมตร มองเห็นยอดเสาเป็นมุมเงย ${ang}° เสาธงสูงกี่เมตร (ไม่คิดความสูงของผู้มอง)`,ans,[`${k}√3`,`${d}`,`${d}√3`,`${d}√2`,`${2*d}`,`${k}√2`],`tan ${ang}° = สูง/${d} → สูง = ${d} × ${t} = ${ans}`)}
+  const m=ri(2,9),L=2*m;const ans={30:`${m}`,45:`${m}√2`,60:`${m}√3`}[ang];const sv={30:'1/2',45:'√2/2',60:'√3/2'}[ang];
+  return mk(`บันไดยาว ${L} เมตร พาดกำแพงโดยทำมุม ${ang}° กับพื้น ปลายบันไดอยู่สูงจากพื้นกี่เมตร`,ans,[`${m}`,`${m}√2`,`${m}√3`,`${L}√3`,`${L}`,`${L}√2`],`sin ${ang}° = สูง/${L} → สูง = ${L} × ${sv} = ${ans}`);
+}
+const H2L=[
+ ['sin 15°','(√6 − √2)/4','sin(45° − 30°) = sin 45° cos 30° − cos 45° sin 30° = √6/4 − √2/4'],
+ ['cos 15°','(√6 + √2)/4','cos(45° − 30°) = cos 45° cos 30° + sin 45° sin 30° = √6/4 + √2/4'],
+ ['sin 75°','(√6 + √2)/4','sin(45° + 30°) = sin 45° cos 30° + cos 45° sin 30° = √6/4 + √2/4'],
+ ['cos 75°','(√6 − √2)/4','cos(45° + 30°) = cos 45° cos 30° − sin 45° sin 30° = √6/4 − √2/4'],
+ ['tan 15°','2 − √3','tan(45° − 30°) = (1 − √3/3)/(1 + √3/3) = 2 − √3'],
+ ['tan 75°','2 + √3','tan(45° + 30°) = (1 + √3/3)/(1 − √3/3) = 2 + √3'],
+ ['sin 105°','(√6 + √2)/4','sin(60° + 45°) = sin 60° cos 45° + cos 60° sin 45° = √6/4 + √2/4'],
+ ['cos 105°','(√2 − √6)/4','cos(60° + 45°) = cos 60° cos 45° − sin 60° sin 45° = √2/4 − √6/4'],
+];
+const h2legend=()=>{const [e,a,x]=pick(H2L);return mk(`${e} มีค่าเท่าใด`,a,['(√6 − √2)/4','(√6 + √2)/4','2 − √3','2 + √3','(√2 − √6)/4','(√3 − 1)/2','(√3 + 1)/4','√6/4'],`${e} = ${x}`)};
+function h3big(){
+  const ang=pick([390,405,420,480,495,510,570,585,600,660,675,690,750,765,780,-30,-45,-60,-120,-135,-150,-210,-225,-240,-300,-315,-330]);const fn=pick(['sin','cos','tan']);
+  const red=((ang%360)+360)%360,r=red*Math.PI/180;const v={sin:Math.sin(r),cos:Math.cos(r),tan:Math.tan(r)}[fn];const ans=valStr(v);
+  const k=(ang-red)/360,A=fmtN(ang);
+  return mk(`${fn}(${A}°) มีค่าเท่าใด`,ans,['1/2','√2/2','√3/2','1','√3','√3/3'].flatMap(x=>[x,'−'+x]),
+    `${A}° ${k>0?'−':'+'} ${Math.abs(k)===1?'':Math.abs(k)+' × '}360° = ${red}° อยู่ควอดรันต์ ${quad(red)} มุมอ้างอิง ${refAng(red)}° และ${SIGNTXT[quad(red)]} → ${fn}(${A}°) = ${ans}`,null,[neg(ans)]);
+}
+function h3sp(){
+  const [p,q]=pick([[1,2],[1,3],[1,5],[7,5],[17,13],[1,4],[2,3],[5,4],[4,3]]);const ans=fr(p*p-q*q,2*q*q);
+  return mk(`ถ้า sin θ + cos θ = ${p}/${q} แล้ว sin θ · cos θ เท่ากับเท่าใด`,ans,[fr(p*p-q*q,q*q),fr(p*p,2*q*q),fr(p*p+q*q,2*q*q),fr(p,2*q),fr(1,2)],
+    `ยกกำลังสองทั้งสองข้าง: 1 + 2 sin θ cos θ = ${p*p}/${q*q} → sin θ cos θ = ${ans}`,null,[neg(ans)]);
+}
+function h3legend(){
+  if(Math.random()<.5){const [n,d]=pick([[1,2],[1,3],[1,4],[2,5],[12,25],[1,5],[3,8]]);const ans=fr(d*d-2*n*n,d*d);
+    return mk(`ถ้า sin θ · cos θ = ${n}/${d} แล้ว sin⁴θ + cos⁴θ เท่ากับเท่าใด`,ans,[fr(d*d-n*n,d*d),fr(d-2*n,d),'1',fr(2*n*n,d*d),fr(d*d+2*n*n,d*d),fr(d-n,d)],
+      `sin⁴θ + cos⁴θ = (sin²θ + cos²θ)² − 2 sin²θ cos²θ = 1 − 2(${n}/${d})² = ${ans}`)}
+  const [p,q]=pick([[1,2],[1,3],[1,5],[7,5],[5,4],[4,3],[2,3]]);const ans=fr(p*(3*q*q-p*p),2*q*q*q),m=fr(p*p-q*q,2*q*q);
+  return mk(`ถ้า sin θ + cos θ = ${p}/${q} แล้ว sin³θ + cos³θ เท่ากับเท่าใด`,ans,[fr(p*p*p,q*q*q),fr(p*(3*q*q-p*p),q*q*q),fr(3*p,2*q),fr(p*(q*q+p*p),2*q*q*q),fr(p,q)],
+    `sin θ cos θ = ${m} และ sin³θ + cos³θ = (sin θ + cos θ)(1 − sin θ cos θ) = (${p}/${q})(1 − (${m})) = ${ans}`);
+}
+function h4sum(){
+  const [t1,t2]=shuffle(TRIPLES.slice(0,4));const [a1,b1,c1]=t1,[a2,b2,c2]=t2;const k=pick(['s+','c+','s-']);
+  const S1=fr(a1*b2+b1*a2,c1*c2),C1=fr(b1*b2-a1*a2,c1*c2),S2=fr(a1*b2-b1*a2,c1*c2);
+  const pre=`ถ้า sin A = ${a1}/${c1} และ sin B = ${a2}/${c2} โดย A, B เป็นมุมแหลม แล้ว `,cs=`cos A = ${b1}/${c1}, cos B = ${b2}/${c2} · `;
+  const pool=[S1,C1,S2,fr(a1*c2+a2*c1,c1*c2),fr(a1*a2,c1*c2),fr(b1*b2+a1*a2,c1*c2)];
+  if(k==='s+')return mk(pre+'sin(A + B) เท่ากับเท่าใด',S1,pool,cs+`sin(A + B) = sin A cos B + cos A sin B = ${S1}`);
+  if(k==='c+')return mk(pre+'cos(A + B) เท่ากับเท่าใด',C1,pool,cs+`cos(A + B) = cos A cos B − sin A sin B = ${C1}`,null,[neg(C1)]);
+  return mk(pre+'sin(A − B) เท่ากับเท่าใด',S2,pool,cs+`sin(A − B) = sin A cos B − cos A sin B = ${S2}`,null,[neg(S2)]);
+}
+function h4max(){const [a,b,c]=pick(TRIPLES);const mn=Math.random()<.4;
+  return mk(`ค่า${mn?'ต่ำ':'สูง'}สุดของ ${a} sin x + ${b} cos x เท่ากับเท่าใด`,fmtN(mn?-c:c),[a+b,-(a+b),b,-b,c+1,a*b,mn?c:-c].map(fmtN),
+    `a sin x + b cos x = R sin(x + α) โดย R = √(a² + b²) = √(${a*a} + ${b*b}) = ${c} จึงมีค่าอยู่ในช่วง [−${c}, ${c}]`)}
+function h4tan2(){const [a,b,c]=pick(TRIPLES.slice(0,4));const ans=fr(2*a*b,b*b-a*a);
+  return mk(`ถ้า tan θ = ${a}/${b} แล้ว tan 2θ เท่ากับเท่าใด`,ans,[fr(2*a,b),fr(2*a*b,c*c),fr(b*b-a*a,2*a*b),fr(a*a,b*b),fr(2*a*b,b*b)],
+    `tan 2θ = 2 tan θ / (1 − tan²θ) = (${fr(2*a,b)}) ÷ (${fr(b*b-a*a,b*b)}) = ${ans}`,null,[neg(ans)])}
+function h4legend(){
+  const [a,b,c]=pick(TRIPLES.slice(0,3));const k=pick(['s3','c2','s2']);
+  if(k==='s3'){const ans=fr(3*a*c*c-4*a*a*a,c*c*c);return mk(`ถ้า sin θ = ${a}/${c} แล้ว sin 3θ เท่ากับเท่าใด`,ans,[fr(3*a,c),fr(a*a*a,c*c*c),fr(2*a*b,c*c),fr(4*a*a*a,c*c*c),fr(3*a*c*c-a*a*a,c*c*c)],
+    `sin 3θ = 3 sin θ − 4 sin³θ = 3(${a}/${c}) − 4(${a}/${c})³ = ${ans}`,null,[neg(ans)])}
+  if(k==='c2'){const ans=fr(c*c-2*a*a,c*c);return mk(`cos(2 arcsin(${a}/${c})) เท่ากับเท่าใด`,ans,[fr(2*a,c),fr(c*c-a*a,c*c),fr(2*a*b,c*c),fr(b,c),fr(2*b,c)],
+    `ให้ θ = arcsin(${a}/${c}) → sin θ = ${a}/${c} · cos 2θ = 1 − 2 sin²θ = 1 − 2(${a*a}/${c*c}) = ${ans}`,null,[neg(ans)])}
+  const ans=fr(2*a*b,c*c);return mk(`sin(2 arctan(${a}/${b})) เท่ากับเท่าใด`,ans,[fr(2*a,b),fr(b*b-a*a,c*c),fr(a*b,c*c),fr(2*a,c),fr(a,c)],
+    `ให้ θ = arctan(${a}/${b}) → sin θ = ${a}/${c}, cos θ = ${b}/${c} · sin 2θ = 2 sin θ cos θ = ${ans}`);
+}
+const TIERS=[
+ [[g1ratio,g1ratio,g1concept],[g1side,g1find],[h1mix],[h1legend]],
+ [[g2val,g2val,g2rad],[g2expr,g2inv],[h2word],[h2legend]],
+ [[g3iden,g3ref],[g3angle,g3pyth],[h3big,h3sp],[h3legend]],
+ [[g4graph,g4inv],[g4cos,g4area,g4sin,g4double],[h4sum,h4max,h4tan2],[h4legend]]];
 /*GEN-END*/
 
 const $=s=>document.querySelector(s);
@@ -394,20 +497,20 @@ const LICH=buildSprite(mirror([
 ".KpppqKppppppppp",".KKKKKKKKKKKKKKK"]));
 
 const BOSSES=[
- {name:'สไลม์ไซน์',en:'SINE SLIME',topic:'อัตราส่วนตรีโกณมิติ',hp:90,sp:SLIME,time:25,proj:'blob',
+ {name:'สไลม์ไซน์',en:'SINE SLIME',topic:'อัตราส่วนตรีโกณมิติ',hp:150,sp:SLIME,time:25,proj:'blob',
   tip:`<div class="chips"><span class="chip">sin θ = ข้าม / ฉาก</span><span class="chip">cos θ = ชิด / ฉาก</span><span class="chip">tan θ = ข้าม / ชิด</span></div>
   <p class="note">ฉาก = ด้านตรงข้ามมุมฉาก · ข้าม = ด้านตรงข้ามมุม θ · ชิด = ด้านประชิดมุม θ<br>ส่วนกลับ: cosec = 1/sin, sec = 1/cos, cot = 1/tan · พีทาโกรัส: ฉาก² = ข้าม² + ชิด²</p>`},
- {name:'โกเลมมุมพิเศษ',en:'ANGLE GOLEM',topic:'ค่ามุมพิเศษ 30° 45° 60° และเรเดียน',hp:110,sp:GOLEM,time:22,proj:'rock',
+ {name:'โกเลมมุมพิเศษ',en:'ANGLE GOLEM',topic:'ค่ามุมพิเศษ 30° 45° 60° และเรเดียน',hp:190,sp:GOLEM,time:22,proj:'rock',
   tip:`<div class="tw"><table><tr><th>θ</th><th>0°</th><th>30°</th><th>45°</th><th>60°</th><th>90°</th></tr>
   <tr><th>sin</th><td>0</td><td>1/2</td><td>√2/2</td><td>√3/2</td><td>1</td></tr>
   <tr><th>cos</th><td>1</td><td>√3/2</td><td>√2/2</td><td>1/2</td><td>0</td></tr>
   <tr><th>tan</th><td>0</td><td>√3/3</td><td>1</td><td>√3</td><td>–</td></tr></table></div>
   <p class="note">π เรเดียน = 180° · องศา → เรเดียน คูณ π/180 · เรเดียน → องศา คูณ 180/π</p>`},
- {name:'มังกรควอดรันต์',en:'QUADRANT DRAGON',topic:'เอกลักษณ์และมุมในทุกควอดรันต์',hp:130,sp:DRAGON,time:25,proj:'fire',
+ {name:'มังกรควอดรันต์',en:'QUADRANT DRAGON',topic:'เอกลักษณ์และมุมในทุกควอดรันต์',hp:230,sp:DRAGON,time:25,proj:'fire',
   tip:`<div class="chips"><span class="chip">sin²θ + cos²θ = 1</span><span class="chip">1 + tan²θ = sec²θ</span><span class="chip">1 + cot²θ = cosec²θ</span></div>
   <div class="quad"><div>Q2 · sin +</div><div>Q1 · ทุกตัว +</div><div>Q3 · tan +</div><div>Q4 · cos +</div></div>
   <p class="note">มุมอ้างอิง: Q2 → 180° − θ · Q3 → θ − 180° · Q4 → 360° − θ แล้วเติมเครื่องหมายตามควอดรันต์</p>`},
- {name:'จอมเวทวงกลมหนึ่งหน่วย',en:'UNIT CIRCLE LICH',topic:'กราฟ ฟังก์ชันผกผัน กฎของ sin และ cos',hp:160,sp:LICH,time:30,proj:'orb',
+ {name:'จอมเวทวงกลมหนึ่งหน่วย',en:'UNIT CIRCLE LICH',topic:'กราฟ ฟังก์ชันผกผัน กฎของ sin และ cos',hp:300,sp:LICH,time:30,proj:'orb',
   tip:`<div class="chips"><span class="chip">y = A sin Bx + C → แอมพลิจูด |A|, คาบ 2π/|B|</span><span class="chip">c² = a² + b² − 2ab cos C</span>
   <span class="chip">a/sin A = b/sin B = 2R</span><span class="chip">พื้นที่ = ½ab sin C</span><span class="chip">sin 2θ = 2 sin θ cos θ</span><span class="chip">cos 2θ = cos²θ − sin²θ</span></div>
   <p class="note">ช่วงค่าหลัก: arcsin, arctan ∈ [−π/2, π/2] · arccos ∈ [0, π]</p>`},
@@ -465,6 +568,12 @@ const SFX={
   hurt(){noise(.2,.3);tone(320,.3,'sawtooth',.25,0,-220)},
   ok(){tone(660,.07,'square',.15);tone(990,.12,'square',.15,.07)},
   bad(){tone(180,.28,'square',.18,0,-60)},
+  fire(){noise(.3,.3);[0,.11,.22].forEach(d=>tone(300,.1,'sawtooth',.2,d,-180))},
+  thunder(){tone(900,.4,'square',.07,0,600);noise(.5,.5,.4);tone(90,.5,'square',.3,.4,-50)},
+  nova(){tone(120,.9,'sawtooth',.13,0,900);[0,1,2,3,4,5,6,7].forEach(i=>tone(440+i*110,.08,'square',.09,i*.1));noise(.7,.55,.9);tone(70,.8,'square',.35,.9,-40)},
+  lvl(){[72,76,79,84,88].forEach((n,i)=>tone(mf(n),.09,'square',.17,i*.07))},
+  rare(t){for(let i=0;i<=t;i++)tone(700+i*250,.09,'square',.13,i*.08)},
+  fin(){noise(.5,.5);tone(200,.6,'sawtooth',.28,0,-150);[76,79,84].forEach((n,i)=>tone(mf(n),.1,'square',.15,.1+i*.06))},
   win(){[72,76,79,84,79,84].forEach((n,i)=>tone(mf(n),i===5?.5:.12,'square',.2,i*.12))},
   lose(){[67,63,60,55].forEach((n,i)=>tone(mf(n),.28,'triangle',.25,i*.22))},
 };
@@ -481,7 +590,7 @@ function schedMusic(){if(!mus.on||!actx)return;const sp=60/mus.pat.bpm/2;while(m
 
 /* ---------- Scene ---------- */
 const cv=$('#cv'),ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
-const S={mode:'title',theme:3,heroA:null,bossA:null,bossVis:false,bossDead:false,proj:[],parts:[],amb:[],slashT:-1e9};
+const S={mode:'title',theme:3,heroA:null,bossA:null,bossVis:false,bossDead:false,proj:[],parts:[],amb:[],slashT:-1e9,fx:null};
 const lerp=(a,b,t)=>a+(b-a)*Math.max(0,Math.min(1,t));
 function px(x,y,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),1,1)}
 function line(x0,y0,x1,y1,c){x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let e=dx+dy;ctx.fillStyle=c;for(let n=0;n<400;n++){ctx.fillRect(x0,y0,1,1);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx}if(e2<=dx){e+=dx;y0+=sy}}}
@@ -499,7 +608,9 @@ function heroState(now){
   let x=28,y=58+(Math.floor(now/420)%2),mode=null;const a=S.heroA;
   if(a){const e=now-a.t0;
     if(a.type==='enter'){const p=Math.min(1,e/700);x=lerp(-18,28,p);y=58+(Math.floor(e/90)%2);if(p>=1)S.heroA=null}
-    else if(a.type==='attack'){const tg=bossState(now).x-14;if(e<150)x=lerp(28,tg,e/150);else if(e<280)x=tg;else if(e<520)x=lerp(tg,28,(e-280)/240);else S.heroA=null;y=58-(e<280?Math.round(Math.sin(Math.min(1,e/280)*Math.PI)*6):0)}
+    else if(a.type==='attack'){const tg=bossState(now).x-14,st=a.stay||280;if(e<150)x=lerp(28,tg,e/150);else if(e<st)x=tg;else if(e<st+240)x=lerp(tg,28,(e-st)/240);else S.heroA=null;y=58-(e<280?Math.round(Math.sin(Math.min(1,e/280)*Math.PI)*6):0)}
+    else if(a.type==='cast'){if(e<a.dur){y=58-(a.tier===3?Math.round(Math.min(1,e/300)*7+Math.sin(e/90)):2);if(a.tier===3&&Math.floor(e/80)%3===0)mode='white';
+      if(Math.random()<.6)S.parts.push({x:x+15+(Math.random()-.5)*4,y:y+6,vx:(Math.random()-.5)*.6,vy:-Math.random()*.9,life:0,max:320,c:a.tier===3?pick(['#ffec27','#ff77a8','#fff1e8']):pick(['#29adff','#fff1e8']),g:0})}else S.heroA=null}
     else if(a.type==='hurt'){if(e<440){x=28-(e<140?3:0)+(Math.floor(e/40)%2?1:-1);mode=(Math.floor(e/70)%2)?'red':null}else S.heroA=null}
     else if(a.type==='win'){y=58-Math.abs(Math.round(Math.sin(e/170)*8))}
     else if(a.type==='down'){y=60;mode='red'}}
@@ -531,6 +642,31 @@ function updAmb(dt){
   S.amb=S.amb.filter(a=>{a.life+=dt;a.ph+=dt/600;a.y+=th.ambUp?-dt*.012:dt*.004;a.x+=Math.sin(a.ph)*.08;return a.life<a.max&&a.y>-2&&a.y<GY+12});
   S.amb.forEach(a=>{if((a.life/250|0)%5!==4)px(a.x,a.y,a.c)});
 }
+const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function slashL(cx,cy,dir,o,c1,c2){if(dir===0){line(cx-13+o,cy,cx+13+o,cy,c1);line(cx-13+o,cy+1,cx+13+o,cy+1,c2)}else{line(cx-10*dir+o,cy-12,cx+8*dir+o,cy+10,c1);line(cx-8*dir+o,cy-12,cx+10*dir+o,cy+10,c2)}}
+function bolt(x0,x1,y1,seed,c){const R=rng(seed);let x=x0,y=0,n=0;while(y<y1&&n++<40){const ny=Math.min(y1,y+4+Math.floor(R()*5));const nx=ny>=y1?x1:x+Math.round((R()-.5)*12)+Math.sign(x1-x)*2;line(x,y,nx,ny,c);x=nx;y=ny}}
+function fxDark(now){const f=S.fx;if(!f)return;const e=now-f.t0;let d=0;if(f.tier===2&&e<700)d=.45;if(f.tier===3&&e<1000)d=.62;if(f.fin&&e>=f.hit&&e<f.hit+500)d=Math.max(d,.5);if(d){ctx.fillStyle=`rgba(5,4,12,${d})`;ctx.fillRect(0,0,160,90)}}
+function drawFX(now,bs){
+  const f=S.fx;if(!f)return;const e=now-f.t0;if(e>f.dur){S.fx=null;return}
+  const cx=Math.round(bs.cx),cy=Math.round(bs.cy),t=f.tier;
+  if(t===0){if(e>=150&&e<310)slashL(cx,cy,1,Math.round((e-150)/40),'#fff1e8','#ffec27')}
+  else if(t===1){[[150,1],[260,-1],[370,0]].forEach(([s0,d])=>{if(e>=s0&&e<s0+150){slashL(cx,cy,d,Math.round((e-s0)/40),'#ffec27','#ffa300');
+      if(Math.random()<.8)S.parts.push({x:cx+(Math.random()-.5)*24,y:cy+(Math.random()-.5)*22,vx:(Math.random()-.5)*.4,vy:-.5-Math.random()*.7,life:0,max:420,c:pick(['#ffa300','#ff004d','#ffec27']),g:-.01})}})}
+  else if(t===2){
+    if(e<400){for(let i=0;i<4;i++)px(cx-16+Math.random()*32,Math.random()*7,pick(['#29adff','#fff1e8','#83769c']))}
+    else if(e<700){const s0=Math.floor(e/55);bolt(cx-12,cx,cy,s0*7+1,'#29adff');bolt(cx+7,cx,cy,s0*7+2,'#fff1e8');bolt(cx-2,cx+1,cy+4,s0*7+3,'#ffec27');
+      if(Math.random()<.7)S.parts.push({x:cx+(Math.random()-.5)*20,y:cy+(Math.random()-.5)*16,vx:(Math.random()-.5)*1.6,vy:(Math.random()-.5)*1.6,life:0,max:220,c:pick(['#29adff','#fff1e8']),g:0})}}
+  else{
+    if(e<900){const r=Math.round(lerp(2,22,e/300));circle(cx,cy,r,'#ff77a8');if(r>8)circle(cx,cy,r+2,'#7e2553');
+      if(e>200){const a=e/90;const X=cx+Math.round(Math.cos(a)*r),Y=cy-Math.round(Math.sin(a)*r);line(cx,cy,X,Y,'#fff1e8');line(X,Y,X,cy,'#ff004d');line(cx,cy,X,cy,'#29adff');
+        const n=Math.min(1,(e-200)/450)*(cx-r-44);for(let i=0;i<n;i++){const yy=62-Math.round(Math.sin(i*.22-e/55)*7);px(44+i,yy,'#ffec27');if(i%3===0)px(44+i,yy+1,'#ffa300')}}}
+    else{const k=(e-900)/600;[0,.16,.32].forEach((o,i)=>{const rr=Math.round((k-o)*80);if(rr>1&&rr<80){circle(cx,cy,rr,['#fff1e8','#ffec27','#ff77a8'][i]);circle(cx,cy,rr+1,['#ffec27','#ffa300','#7e2553'][i])}})}}
+  if(f.fin&&e>=f.hit){const k=e-f.hit;
+    if(k<450){const n=4+t*2,L=Math.min(95,k/2);for(let i=0;i<n;i++){const a=i*Math.PI/n+k/320;line(cx-Math.cos(a)*L,cy-Math.sin(a)*L,cx+Math.cos(a)*L,cy+Math.sin(a)*L,i%2?'#ffec27':'#fff1e8')}}
+    const rr=Math.round(k/8);if(rr>1&&rr<70){circle(cx,cy,rr,'#fff1e8');if(rr>4)circle(cx,cy,rr-3,'#ff004d')}}
+  let fl=0;if(t===2&&e>=400&&e<470)fl=.75;if(t===3&&e>=900&&e<1000)fl=.9;if(f.fin&&e>=f.hit&&e<f.hit+90)fl=.9;
+  if(fl&&!RM){ctx.fillStyle=`rgba(255,241,232,${fl})`;ctx.fillRect(0,0,160,90)}
+}
 let last=performance.now();
 function frame(now){
   const dt=Math.min(50,now-last);last=now;
@@ -539,12 +675,12 @@ function frame(now){
     unitCircle(30,58,15,now/900,true);
     const h=heroState(now);
   }else{
-    const b=boss(),bs=bossState(now);
+    const b=boss(),bs=bossState(now);fxDark(now);
     if(G.stage===3&&bs.vis)unitCircle(bs.cx,bs.y+11,20,now/700,false);
     if(bs.vis){drawShadow(bs.x,b.sp.w);ctx.drawImage(bs.mode?b.sp[bs.mode]:b.sp.n,bs.x,bs.y)}
     const h=heroState(now);drawShadow(h.x,16);ctx.drawImage(h.mode?HERO[h.mode]:HERO.n,Math.round(h.x),Math.round(h.y));
     S.proj=S.proj.filter(p=>now-p.t0<p.dur);S.proj.forEach(p=>drawProj(p,now));
-    const se=now-S.slashT;if(se<160){const cx=bs.cx,cy=bs.cy;const o=Math.round(se/40);line(cx-10+o,cy-12,cx+8+o,cy+10,'#fff1e8');line(cx-8+o,cy-12,cx+10+o,cy+10,'#ffec27');if(S.crit){line(cx+8,cy-12,cx-10,cy+10,'#fff1e8')}}
+    drawFX(now,bs);
   }
   S.parts=S.parts.filter(p=>{p.life+=dt;p.x+=p.vx*dt/16;p.y+=p.vy*dt/16;p.vy+=p.g*dt/16;return p.life<p.max});
   S.parts.forEach(p=>px(p.x,p.y,p.c));
@@ -563,14 +699,21 @@ function setScore(){$('#score').textContent=String(G.score).padStart(6,'0')}
 function hud(){
   $('#hearts').innerHTML=Array.from({length:5},(_,i)=>HEART.replace('CLS',i<G.hearts?'':'class="empty"')).join('');
   $('#combo').textContent=G.combo>1?`COMBO x${G.combo}`:'';
-  const b=boss();$('#bname').textContent=b.en;const w=Math.max(0,G.bossHp/b.hp*100)+'%';$('#hpFill').style.width=w;$('#hpGhost').style.width=w;
+  const b=boss();$('#bname').textContent=b.en;const w=Math.max(0,G.dispHp/b.hp*100)+'%';$('#hpFill').style.width=w;$('#hpGhost').style.width=w;
+  $('#lv').textContent='LV '+G.lv;$('#xpFill').style.width=Math.min(100,G.xp/xpNeed()*100)+'%';
   setScore();
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let best=0;try{best=+localStorage.getItem('trigquest-best')||0}catch(e){}
 
 /* ---------- Game state ---------- */
-const G={stage:0,hearts:5,score:0,combo:0,bestCombo:0,correct:0,total:0,stCorrect:0,bossHp:0,q:null,qStart:0,qTime:25,phase:'idle',used:new Set(),qn:0};
+const TNAME=['NORMAL','RARE ★','EPIC ★★','LEGEND ★★★'],TBAN=['','RARE!','EPIC!!','LEGEND!!!'],TMULT=[1,1.5,2.1,3],TXP=[10,18,30,50],TTIME=[0,5,12,20];
+const SKILL=[{n:'SLASH',hit:150,dur:520},{n:'FLAME EDGE',hit:370,dur:800},{n:'THUNDER STRIKE',hit:430,dur:1000},{n:'UNIT CIRCLE NOVA',hit:900,dur:1600}];
+const FIN=['FINAL SLASH','INFERNO CROSS','JUDGMENT BOLT','TRIG APOCALYPSE'];
+const FXC=[['#fff1e8','#ffec27'],['#ffa300','#ff004d','#ffec27'],['#29adff','#fff1e8','#ffec27'],['#ff77a8','#ffec27','#fff1e8','#29adff']];
+const xpNeed=()=>20+G.lv*15;
+function pickTier(){const lv=G.lv;const w=[Math.max(20,52-lv*5),28,12+lv*3,4+lv*2+G.stage*2];let r=Math.random()*w.reduce((a,b)=>a+b),i=0;for(;i<3;i++){if((r-=w[i])<0)break}return i}
+const G={stage:0,hearts:5,score:0,combo:0,bestCombo:0,correct:0,total:0,stCorrect:0,bossHp:0,q:null,qStart:0,qTime:25,phase:'idle',used:new Set(),qn:0,lv:1,xp:0,dispHp:0,tok:0};
 
 function tickTimer(now){
   if(G.phase!=='asking')return;
@@ -583,43 +726,45 @@ function setTimerIdle(){timerEl.classList.remove('low');timerEl.classList.add('i
 function renderTitle(){
   S.mode='title';S.theme=3;$('#logo').hidden=false;$('#hud').hidden=true;banner.hidden=true;setTimerIdle();
   const icons=BOSSES.map(b=>b.sp.n.toDataURL());
-  panel.innerHTML=`
-   <p class="lead">ตอบโจทย์ตรีโกณมิติให้ถูกเพื่อฟันบอส ตอบเร็วยิ่งแรงและมีโอกาสคริติคอล ตอบผิดหรือหมดเวลาจะโดนบอสสวนกลับ หัวใจหมดคือแพ้</p>
+  panel.className='panel pframe';panel.innerHTML=`
+   <p class="lead">ตอบโจทย์ตรีโกณมิติให้ถูกเพื่อปล่อยสกิลใส่บอส โจทย์สุ่มระดับความยาก ยิ่งยากสกิลยิ่งอลังและดาเมจยิ่งแรง ปิดฉากบอสด้วยข้อไหนจะได้ฟินิชเชอร์ของระดับนั้น ตอบผิดหรือหมดเวลาจะโดนสวนกลับ</p>
+   <div class="tiers"><span class="tier">NORMAL x1</span><span class="tier t1">RARE x1.5</span><span class="tier t2">EPIC x2.1</span><span class="tier t3">LEGEND x3</span></div>
    <ul class="roster">${BOSSES.map((b,i)=>`<li><img src="${icons[i]}" alt=""><div><div class="st">STAGE ${i+1}</div><b>${b.name}</b><span>${b.topic}</span></div></li>`).join('')}</ul>
-   <div class="howto"><span><b>1–4</b> หรือแตะเพื่อเลือกคำตอบ</span><span><b>Enter</b> ไปต่อ</span><span><b>ตอบถูกติดกัน</b> ได้คอมโบเพิ่มดาเมจ</span></div>
+   <div class="howto"><span><b>1–4</b> หรือแตะเพื่อเลือกคำตอบ</span><span><b>Enter</b> ไปต่อ</span><span><b>ตอบถูก</b> ได้ EXP เลเวลอัปแล้วดาเมจเพิ่มและเจอข้อยากบ่อยขึ้น</span></div>
    <div class="btns"><span class="best">BEST <b>${String(best).padStart(6,'0')}</b></span><button class="btn" data-act="start" data-primary>เริ่มผจญภัย ▶</button></div>`;
 }
-function newGame(){Object.assign(G,{stage:0,hearts:5,score:0,combo:0,bestCombo:0,correct:0,total:0,used:new Set()});setScore();stageIntro()}
+function newGame(){Object.assign(G,{stage:0,hearts:5,score:0,combo:0,bestCombo:0,correct:0,total:0,used:new Set(),lv:1,xp:0});setScore();stageIntro()}
 function stageIntro(){
-  const b=boss();G.bossHp=b.hp;G.stCorrect=0;G.qn=0;G.phase='idle';G.combo=0;
-  S.mode='battle';S.theme=G.stage;S.bossVis=true;S.bossDead=false;S.proj=[];S.parts=[];S.amb=[];
+  const b=boss();G.bossHp=G.dispHp=b.hp;G.tok++;G.stCorrect=0;G.qn=0;G.phase='idle';G.combo=0;
+  S.mode='battle';S.theme=G.stage;S.bossVis=true;S.bossDead=false;S.proj=[];S.parts=[];S.amb=[];S.fx=null;
   const now=performance.now();S.heroA={type:'enter',t0:now};S.bossA={type:'enter',t0:now+200};
   $('#logo').hidden=true;$('#hud').hidden=false;hud();setTimerIdle();
   showBanner(`STAGE ${G.stage+1}`,1300);
   stopMusic();startMusic(G.stage);
-  panel.innerHTML=`
+  panel.className='panel pframe';panel.innerHTML=`
    <div class="tags"><span class="tag">STAGE ${G.stage+1} / 4</span><span class="tag alt">HP ${b.hp}</span></div>
    <h2>${b.name}<small>${b.en}</small></h2>
    <p class="lead">หัวข้อ: ${b.topic} · เวลาตอบข้อละ ${b.time} วินาที</p>
    <div class="scroll"><h3>คัมภีร์ก่อนสู้</h3>${b.tip}</div>
    <div class="btns"><button class="btn" data-act="fight" data-primary>เริ่มต่อสู้ ▶</button></div>`;
 }
-function genQ(){
-  const gens=GENS[G.stage];let q;
+function genQ(tier){
+  const gens=TIERS[G.stage][tier];let q;
   for(let i=0;i<25;i++){q=pick(gens)();const key=q.q+'|'+q.choices[q.ans];if(!G.used.has(key)){G.used.add(key);break}}
-  return q;
+  q.tier=tier;return q;
 }
 function nextQuestion(){
-  const b=boss();G.q=genQ();G.qn++;G.qTime=b.time;
+  const b=boss();G.qn++;const tier=(G.stage===0&&G.qn===1)?0:pickTier();G.q=genQ(tier);G.qTime=b.time+TTIME[tier];
   const q=G.q;
-  panel.innerHTML=`
-   <div class="tags"><span class="tag">STAGE ${G.stage+1} · ข้อ ${G.qn}</span><span class="tag alt">${b.topic}</span></div>
+  panel.className='panel pframe';panel.innerHTML=`
+   <div class="tags"><span class="tier t${tier}">${TNAME[tier]}</span><span class="tag">STAGE ${G.stage+1} · ข้อ ${G.qn}</span><span class="tag alt">DMG x${TMULT[tier]}</span><span class="tag alt">${b.topic}</span></div>
    <div class="qbody">${q.fig?'<canvas id="fig" aria-label="รูปสามเหลี่ยมมุมฉาก"></canvas>':''}<p class="qtext">${esc(q.q)}</p></div>
    <div class="answers">${q.choices.map((c,i)=>`<button class="ans" id="ans${i}" data-act="ans" data-i="${i}"><span class="k">${i+1}</span><span>${esc(c)}</span></button>`).join('')}</div>
    <div id="fbSlot"></div>
    <details class="cheat"><summary>เปิดคัมภีร์สูตร</summary><div class="scroll">${b.tip}</div></details>`;
   if(q.fig){const c=$('#fig');drawFig(c,q.fig);document.fonts&&document.fonts.ready.then(()=>{if(G.q===q&&document.body.contains(c))drawFig(c,q.fig)})}
   timerEl.classList.remove('idle');G.phase='asking';G.qStart=performance.now();
+  panel.className='panel pframe t'+tier;if(tier){showBanner(TBAN[tier],900,'t'+tier);SFX.rare(tier)}
 }
 function drawFig(cnv,f){
   const W=184,H=126,dpr=Math.min(2,window.devicePixelRatio||1);cnv.width=W*dpr;cnv.height=H*dpr;cnv.style.width=W+'px';cnv.style.height=H+'px';
@@ -644,16 +789,26 @@ function answer(i){
   document.querySelectorAll('.ans').forEach((el,k)=>{el.disabled=true;if(k===q.ans)el.classList.add('ok');else if(k===i)el.classList.add('bad');else el.classList.add('dim')});
   let head;
   if(ok){
+    const tier=q.tier||0,sk=SKILL[tier],tok=G.tok;
     G.correct++;G.stCorrect++;G.combo++;G.bestCombo=Math.max(G.bestCombo,G.combo);
-    const crit=frac>.6;let dmg=16+Math.round(frac*10)+Math.min(G.combo-1,5)*2;if(crit)dmg=Math.round(dmg*1.5);
-    G.score+=dmg*10+Math.round(frac*100);
-    SFX.ok();S.heroA={type:'attack',t0:now};S.crit=crit;
-    setTimeout(()=>{const bs=bossState(performance.now());S.slashT=performance.now();crit?SFX.crit():SFX.hit();
-      G.bossHp=Math.max(0,G.bossHp-dmg);S.bossA={type:'hurt',t0:performance.now()};explode(bs.cx,bs.cy,['#fff1e8','#ffec27'],crit?18:10);
-      floatText((crit?'CRIT! ':'')+'-'+dmg,bs.cx,bs.y-4,crit?'crit':'');if(crit)shake();hud();
-      if(G.bossHp<=0){S.bossA={type:'die',t0:performance.now()+250};setTimeout(()=>{showBanner('K.O.!',1400,'good');stopMusic();SFX.win()},700)}
-    },150);
-    head=`ถูกต้อง! ${crit?'คริติคอล ':''}ฟัน ${dmg} ดาเมจ${G.combo>1?` · คอมโบ x${G.combo}`:''}`;
+    const crit=frac>.6;let dmg=Math.round((14+frac*10+Math.min(G.combo-1,5)*2+(G.lv-1)*2)*TMULT[tier]);if(crit)dmg=Math.round(dmg*1.4);
+    G.score+=dmg*10+Math.round(frac*100)+tier*150;
+    G.bossHp=Math.max(0,G.bossHp-dmg);const kill=G.bossHp<=0,hpAfter=G.bossHp;
+    G.xp+=TXP[tier];let up=false;while(G.xp>=xpNeed()){G.xp-=xpNeed();G.lv++;up=true}
+    SFX.ok();S.crit=crit;
+    S.heroA=tier<2?{type:'attack',t0:now,stay:tier?540:280}:{type:'cast',t0:now,dur:sk.dur,tier};
+    S.fx={tier,t0:now,hit:sk.hit,dur:sk.dur+(kill?700:0),fin:kill};
+    if(tier===1)SFX.fire();else if(tier===2)SFX.thunder();else if(tier===3)SFX.nova();
+    if(tier)floatText(sk.n,36,44,'skill t'+tier);
+    setTimeout(()=>{if(tok!==G.tok)return;const t=performance.now(),bs=bossState(t);
+      if(tier===0)crit?SFX.crit():SFX.hit();
+      G.dispHp=hpAfter;S.bossA={type:'hurt',t0:t};explode(bs.cx,bs.cy,FXC[tier],10+tier*10+(crit?8:0));
+      floatText((crit?'CRIT! ':'')+'-'+dmg,bs.cx,bs.y-4,crit||tier>1?'crit':'');if(crit||tier>1)shake();hud();
+      if(up){floatText('LEVEL UP!',36,34,'crit');SFX.lvl()}
+      if(kill){S.bossA={type:'die',t0:t+350};SFX.fin();shake();showBanner(FIN[tier],900,'t'+tier);explode(bs.cx,bs.cy,['#fff1e8','#ffec27','#ff004d'],40+tier*30);
+        setTimeout(()=>{if(tok!==G.tok)return;showBanner('K.O.!',1400,'good');stopMusic();SFX.win()},1000)}
+    },sk.hit);
+    head=`ถูกต้อง! ${kill?FIN[tier]:sk.n}${crit?' คริติคอล':''} ${dmg} ดาเมจ${G.combo>1?` · คอมโบ x${G.combo}`:''}${up?` · เลเวลอัป LV ${G.lv}`:''}`;
   }else{
     G.combo=0;SFX.bad();S.bossA={type:'attack',t0:now};
     setTimeout(()=>{const bs=bossState(performance.now());S.proj.push({t0:performance.now(),dur:280,x0:bs.x,y0:bs.cy,x1:36,y1:64,kind:b.proj})},230);
@@ -674,9 +829,9 @@ function stageClear(){
   if(G.stage===3)return victory();
   const b=boss();const gain=G.hearts<5?1:0;G.hearts+=gain;hud();
   S.heroA={type:'win',t0:performance.now()};showBanner('STAGE CLEAR',1600,'good');
-  panel.innerHTML=`<h2>ปราบ${b.name}สำเร็จ!<small>${b.en} DEFEATED</small></h2>
+  panel.className='panel pframe';panel.innerHTML=`<h2>ปราบ${b.name}สำเร็จ!<small>${b.en} DEFEATED</small></h2>
    <div class="stats"><div class="stat"><span>ตอบถูกในด่านนี้</span><b>${G.stCorrect}/${G.qn}</b></div><div class="stat"><span>คอมโบสูงสุด</span><b>x${G.bestCombo}</b></div>
-   <div class="stat"><span>หัวใจ</span><b>${G.hearts}/5${gain?' (+1)':''}</b></div></div>
+   <div class="stat"><span>หัวใจ</span><b>${G.hearts}/5${gain?' (+1)':''}</b></div><div class="stat"><span>เลเวล</span><b>LV ${G.lv}</b></div></div>
    <p class="lead">บอสถัดไป: <b>${BOSSES[G.stage+1].name}</b> คุมหัวข้อ${BOSSES[G.stage+1].topic}</p>
    <div class="btns"><button class="btn" data-act="nextStage" data-primary>ไปด่านต่อไป ▶</button></div>`;
 }
@@ -684,16 +839,16 @@ function victory(){
   const acc=G.total?Math.round(G.correct/G.total*100):0;const rank=acc>=90?'S':acc>=75?'A':acc>=60?'B':'C';
   const isBest=G.score>best;if(isBest){best=G.score;try{localStorage.setItem('trigquest-best',best)}catch(e){}}
   S.heroA={type:'win',t0:performance.now()};showBanner('VICTORY!',0,'good');
-  panel.innerHTML=`<div class="tags"><span class="tag">ALL STAGES CLEAR</span>${isBest?'<span class="tag alt">NEW BEST</span>':''}</div>
+  panel.className='panel pframe';panel.innerHTML=`<div class="tags"><span class="tag">ALL STAGES CLEAR</span>${isBest?'<span class="tag alt">NEW BEST</span>':''}</div>
    <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><div class="rank">${rank}</div><h2>ปราสาทตรีโกณมิติแตกแล้ว!<small>THE UNIT CIRCLE IS YOURS</small></h2></div>
    <div class="stats"><div class="stat"><span>คะแนน</span><b>${String(G.score).padStart(6,'0')}</b></div><div class="stat"><span>ความแม่นยำ</span><b>${acc}%</b></div>
-   <div class="stat"><span>ตอบถูก</span><b>${G.correct}/${G.total}</b></div><div class="stat"><span>คอมโบสูงสุด</span><b>x${G.bestCombo}</b></div></div>
+   <div class="stat"><span>ตอบถูก</span><b>${G.correct}/${G.total}</b></div><div class="stat"><span>เลเวล</span><b>LV ${G.lv}</b></div><div class="stat"><span>คอมโบสูงสุด</span><b>x${G.bestCombo}</b></div></div>
    <div class="btns"><button class="btn ghost" data-act="home">หน้าแรก</button><button class="btn" data-act="start" data-primary>เล่นอีกครั้ง ▶</button></div>`;
 }
 function gameOver(){
   G.phase='idle';setTimerIdle();
   const isBest=G.score>best;if(isBest){best=G.score;try{localStorage.setItem('trigquest-best',best)}catch(e){}}
-  panel.innerHTML=`<h2>หัวใจหมดแล้ว…<small>DEFEATED BY ${boss().en}</small></h2>
+  panel.className='panel pframe';panel.innerHTML=`<h2>หัวใจหมดแล้ว…<small>DEFEATED BY ${boss().en}</small></h2>
    <p class="lead">ทบทวนคัมภีร์ของด่านนี้แล้วกลับไปลุยใหม่ บอสจะเริ่มด้วย HP เต็ม ส่วนคุณได้หัวใจคืนครบ 5 ดวง</p>
    <div class="stats"><div class="stat"><span>คะแนน</span><b>${String(G.score).padStart(6,'0')}</b></div><div class="stat"><span>ด่านที่ไปถึง</span><b>${G.stage+1}/4</b></div></div>
    <div class="scroll"><h3>คัมภีร์: ${boss().topic}</h3>${boss().tip}</div>
@@ -711,7 +866,7 @@ panel.addEventListener('click',e=>{
   else if(a==='nextStage'){G.stage++;stageIntro()}
   else if(a==='over')gameOver();
   else if(a==='retry'){G.hearts=5;banner.hidden=true;stageIntro()}
-  else if(a==='home'){stopMusic();renderTitle()}
+  else if(a==='home'){G.tok++;stopMusic();renderTitle()}
 });
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='SUMMARY')return;
