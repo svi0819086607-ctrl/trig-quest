@@ -170,6 +170,11 @@ details.cheat[open] summary{margin-bottom:10px}
 .float.skill{font-size:clamp(9px,2.2vw,14px);color:var(--orange)}
 .float.skill.t2{color:var(--blue)}
 .float.skill.t3{color:var(--pink)}
+/* admin */
+.admin{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;color:var(--steel);border:2px dashed var(--lav);padding:8px 10px}
+.admin button,.admin select{font-family:var(--f-thai);font-size:14px;font-weight:600;color:var(--paper);background:var(--night);border:2px solid var(--lav);padding:5px 10px;cursor:pointer}
+.admin button:hover{border-color:var(--yellow)}
+.admin #admOk{background:var(--moss);border-color:var(--green)}
 @media (prefers-reduced-motion:reduce){
   .panel.t3{animation:none}
   .screen.shake,.banner,.float,.timer.low i{animation:none}
@@ -199,6 +204,13 @@ details.cheat[open] summary{margin-bottom:10px}
   </div>
 
   <div class="timer idle" id="timer"><i id="timerFill"></i></div>
+
+  <div class="admin" id="admin" hidden>
+    <span class="tag">ADMIN</span>
+    <button id="admOk" type="button">ตอบถูกเลย [0]</button>
+    <label for="admTier">ระดับโจทย์ <select id="admTier"><option value="-1">สุ่ม</option><option value="0">NORMAL</option><option value="1">RARE</option><option value="2">EPIC</option><option value="3">LEGEND</option></select></label>
+    <button id="admHeal" type="button">เติมหัวใจ</button>
+  </div>
 
   <section class="panel pframe" id="panel" aria-live="polite"></section>
 </div>
@@ -712,7 +724,7 @@ const SKILL=[{n:'SLASH',hit:150,dur:520},{n:'FLAME EDGE',hit:370,dur:800},{n:'TH
 const FIN=['FINAL SLASH','INFERNO CROSS','JUDGMENT BOLT','TRIG APOCALYPSE'];
 const FXC=[['#fff1e8','#ffec27'],['#ffa300','#ff004d','#ffec27'],['#29adff','#fff1e8','#ffec27'],['#ff77a8','#ffec27','#fff1e8','#29adff']];
 const xpNeed=()=>20+G.lv*15;
-function pickTier(){const lv=G.lv;const w=[Math.max(20,52-lv*5),28,12+lv*3,4+lv*2+G.stage*2];let r=Math.random()*w.reduce((a,b)=>a+b),i=0;for(;i<3;i++){if((r-=w[i])<0)break}return i}
+function pickTier(){const af=+$('#admTier').value;if(admin&&af>=0)return af;const lv=G.lv;const w=[Math.max(20,52-lv*5),28,12+lv*3,4+lv*2+G.stage*2];let r=Math.random()*w.reduce((a,b)=>a+b),i=0;for(;i<3;i++){if((r-=w[i])<0)break}return i}
 const G={stage:0,hearts:5,score:0,combo:0,bestCombo:0,correct:0,total:0,stCorrect:0,bossHp:0,q:null,qStart:0,qTime:25,phase:'idle',used:new Set(),qn:0,lv:1,xp:0,dispHp:0,tok:0};
 
 function tickTimer(now){
@@ -754,7 +766,7 @@ function genQ(tier){
   q.tier=tier;return q;
 }
 function nextQuestion(){
-  const b=boss();G.qn++;const tier=(G.stage===0&&G.qn===1)?0:pickTier();G.q=genQ(tier);G.qTime=b.time+TTIME[tier];
+  const b=boss();G.qn++;const tier=(G.stage===0&&G.qn===1&&!admin)?0:pickTier();G.q=genQ(tier);G.qTime=b.time+TTIME[tier];
   const q=G.q;
   panel.className='panel pframe';panel.innerHTML=`
    <div class="tags"><span class="tier t${tier}">${TNAME[tier]}</span><span class="tag">STAGE ${G.stage+1} · ข้อ ${G.qn}</span><span class="tag alt">DMG x${TMULT[tier]}</span><span class="tag alt">${b.topic}</span></div>
@@ -870,11 +882,18 @@ panel.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='SUMMARY')return;
-  if(G.phase==='asking'){const m={'1':0,'2':1,'3':2,'4':3}[e.key];if(m!==undefined){e.preventDefault();answer(m)}return}
+  if(G.phase==='asking'){if(admin&&e.key==='0'){e.preventDefault();answer(G.q.ans);return}const m={'1':0,'2':1,'3':2,'4':3}[e.key];if(m!==undefined){e.preventDefault();answer(m)}return}
   if(e.key==='Enter'&&e.target.tagName!=='BUTTON'){const p=panel.querySelector('[data-primary]');if(p){e.preventDefault();p.click()}}
 });
 $('#mute').addEventListener('click',e=>{muted=!muted;if(master)master.gain.value=muted?0:.22;e.currentTarget.textContent=muted?'SOUND OFF':'SOUND ON';e.currentTarget.setAttribute('aria-pressed',muted)});
 
+let admin=false,brandTaps=0,brandT=0;
+function setAdmin(on){admin=on;$('#admin').hidden=!on}
+$('.brand').addEventListener('click',()=>{const n=Date.now();brandTaps=n-brandT<600?brandTaps+1:1;brandT=n;if(brandTaps>=5){brandTaps=0;setAdmin(!admin)}});
+if(location.hash==='#admin')setAdmin(true);
+window.addEventListener('hashchange',()=>{if(location.hash==='#admin')setAdmin(true)});
+$('#admOk').addEventListener('click',()=>{if(G.phase==='asking')answer(G.q.ans)});
+$('#admHeal').addEventListener('click',()=>{if(S.mode==='battle'&&G.hearts>0){G.hearts=5;hud()}});
 renderTitle();requestAnimationFrame(frame);
 </script>
 </body>
