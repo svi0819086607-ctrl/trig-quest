@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Trig Quest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Chakra+Petch:wght@400;600;700&display=swap">
+<style>
+/* Layout: one 760px column — arcade screen on top, RPG dialog box below. Single deliberate dark palette (PICO-8 inspired). */
+:root{
+  --ink:#0b0a18; --void:#0d0b1e; --deep:#141c3f; --night:#1d2b53; --plum:#7e2553;
+  --steel:#c2c3c7; --paper:#fff1e8; --red:#ff004d; --orange:#ffa300; --yellow:#ffec27;
+  --green:#00e436; --moss:#008751; --blue:#29adff; --lav:#83769c; --pink:#ff77a8;
+  --f-pixel:"Press Start 2P", "Courier New", monospace;
+  --f-thai:"Chakra Petch", "Tahoma", "Leelawadee UI", sans-serif;
+  color-scheme:dark;
+}
+html,body{background:var(--void);color:var(--paper)}
+body{font-family:var(--f-thai);font-size:16px;line-height:1.55;
+  background-image:radial-gradient(circle at 50% -10%, #241a4a 0, transparent 60%);
+  background-attachment:fixed;}
+.wrap{max-width:760px;margin:0 auto;padding-block:14px 32px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:center;gap:12px;font-family:var(--f-pixel);font-size:10px;letter-spacing:.06em}
+.brand{color:var(--yellow);text-shadow:2px 2px 0 var(--red)}
+.score{margin-left:auto;color:var(--steel)}
+.score b{color:var(--paper);font-weight:400;font-variant-numeric:tabular-nums}
+.icon-btn{font-family:var(--f-pixel);font-size:9px;color:var(--paper);background:var(--night);border:2px solid var(--lav);padding:6px 8px;cursor:pointer}
+.icon-btn:hover{border-color:var(--yellow)}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+
+.pframe{border:4px solid var(--paper);
+  clip-path:polygon(0 6px,6px 6px,6px 0,calc(100% - 6px) 0,calc(100% - 6px) 6px,100% 6px,100% calc(100% - 6px),calc(100% - 6px) calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,6px calc(100% - 6px),0 calc(100% - 6px))}
+
+.screen{position:relative;aspect-ratio:16/9;width:100%;max-width:100%;background:var(--ink);overflow:hidden}
+.screen canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.scan{position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0,0,0,.16) 2px 3px),
+  radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.45) 100%)}
+.screen.shake{animation:shake .38s steps(6)}
+@keyframes shake{0%{transform:translate(0,0)}20%{transform:translate(-5px,2px)}40%{transform:translate(4px,-3px)}60%{transform:translate(-3px,1px)}80%{transform:translate(2px,2px)}100%{transform:translate(0,0)}}
+
+.logo{position:absolute;left:0;right:0;top:7%;text-align:center;pointer-events:none}
+.logo h1{margin:0;font-family:var(--f-pixel);font-weight:400;font-size:clamp(20px,6.4vw,46px);line-height:1.1;color:var(--yellow);
+  text-shadow:3px 3px 0 var(--red), 6px 6px 0 var(--ink);letter-spacing:.04em}
+.logo p{margin:.5em 0 0;font-weight:700;font-size:clamp(12px,2.6vw,17px);color:var(--paper);text-shadow:2px 2px 0 var(--ink)}
+
+.hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:2.2% 2.6%;pointer-events:none;font-family:var(--f-pixel)}
+.hearts{display:flex;gap:3px}
+.hearts svg{width:clamp(12px,2.8vw,20px);height:auto;color:var(--red);filter:drop-shadow(2px 2px 0 var(--ink))}
+.hearts svg.empty{color:#3a2a44}
+.combo{margin-top:6px;font-size:clamp(7px,1.6vw,10px);color:var(--yellow);text-shadow:2px 2px 0 var(--ink);min-height:1em}
+.hud-r{display:flex;flex-direction:column;align-items:flex-end;gap:5px;width:42%}
+.bname{font-size:clamp(7px,1.6vw,10px);color:var(--paper);text-shadow:2px 2px 0 var(--ink);text-align:right}
+.hpbar{position:relative;width:100%;height:clamp(8px,1.8vw,12px);background:var(--ink);border:2px solid var(--paper)}
+.hpbar i{position:absolute;left:0;top:0;bottom:0;display:block}
+.hpbar .ghost{background:var(--paper);transition:width .6s .25s steps(8)}
+.hpbar .fill{background:linear-gradient(var(--pink) 0 35%, var(--red) 35%);transition:width .25s steps(4)}
+
+.banner{position:absolute;left:0;right:0;top:40%;text-align:center;font-family:var(--f-pixel);font-size:clamp(16px,5.6vw,38px);
+  color:var(--yellow);text-shadow:3px 3px 0 var(--red),6px 6px 0 var(--ink);animation:pop .35s steps(4);pointer-events:none}
+.banner.good{color:var(--green);text-shadow:3px 3px 0 var(--moss),6px 6px 0 var(--ink)}
+.banner.bad{color:var(--red);text-shadow:3px 3px 0 var(--plum),6px 6px 0 var(--ink)}
+@keyframes pop{from{transform:scale(1.8);opacity:0}to{transform:scale(1);opacity:1}}
+.floats{position:absolute;inset:0;pointer-events:none}
+.float{position:absolute;transform:translate(-50%,-50%);font-family:var(--f-pixel);font-size:clamp(10px,2.6vw,16px);color:var(--paper);
+  text-shadow:2px 2px 0 var(--ink);animation:floatUp .95s steps(10) forwards;white-space:nowrap}
+.float.crit{color:var(--yellow);font-size:clamp(12px,3.2vw,20px)}
+.float.hurt{color:var(--red)}
+@keyframes floatUp{0%{opacity:0;margin-top:6px}15%{opacity:1}100%{opacity:0;margin-top:-34px}}
+
+.timer{height:12px;background:var(--ink);border:2px solid var(--lav);position:relative}
+.timer i{position:absolute;left:0;top:0;bottom:0;display:block;width:100%;background:var(--green)}
+.timer.low i{background:var(--red);animation:blink .4s steps(2) infinite}
+.timer.idle i{background:var(--lav);opacity:.4}
+@keyframes blink{50%{opacity:.35}}
+
+.panel{background:var(--deep);padding:18px 18px 20px;display:flex;flex-direction:column;gap:14px;min-height:220px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tag{font-family:var(--f-pixel);font-size:9px;letter-spacing:.08em;color:var(--ink);background:var(--yellow);padding:5px 7px}
+.tag.alt{background:var(--lav);color:var(--paper)}
+.qbody{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.qbody canvas{flex:0 0 auto;background:var(--ink);border:2px solid var(--night);max-width:100%}
+.qtext{flex:1 1 220px;min-width:0;margin:0;font-size:clamp(18px,3.4vw,22px);font-weight:600;line-height:1.5;text-wrap:balance}
+.answers{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ans{display:flex;align-items:center;gap:10px;text-align:left;min-height:54px;padding:8px 12px;font-family:var(--f-thai);font-size:clamp(17px,3.2vw,20px);font-weight:600;
+  color:var(--paper);background:var(--night);border:3px solid var(--lav);box-shadow:0 4px 0 var(--ink);cursor:pointer}
+.ans:hover:not(:disabled){border-color:var(--yellow);transform:translateY(-1px)}
+.ans:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.ans .k{flex:0 0 auto;font-family:var(--f-pixel);font-size:9px;color:var(--ink);background:var(--yellow);padding:5px 6px}
+.ans span:last-child{min-width:0}
+.ans:disabled{cursor:default}
+.ans.ok{background:var(--moss);border-color:var(--green)}
+.ans.bad{background:var(--plum);border-color:var(--red)}
+.ans.dim{opacity:.45}
+
+.fb{border-left:6px solid var(--green);background:rgba(0,0,0,.25);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.fb.bad{border-color:var(--red)}
+.fb h3{margin:0;font-family:var(--f-pixel);font-weight:400;font-size:11px;line-height:1.6;color:var(--green)}
+.fb.bad h3{color:var(--red)}
+.fb p{margin:0;font-size:17px;max-width:65ch}
+.fb .row{display:flex;justify-content:flex-end}
+
+.btn{font-family:var(--f-thai);font-weight:700;font-size:18px;color:var(--paper);background:var(--red);border:3px solid var(--ink);
+  box-shadow:0 5px 0 var(--plum),0 5px 0 3px var(--ink);padding:10px 20px;cursor:pointer}
+.btn:hover{background:#ff2a66}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--plum),0 1px 0 3px var(--ink)}
+.btn.ghost{background:var(--night);box-shadow:0 5px 0 var(--ink)}
+.btns{display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;align-items:center}
+
+h2{margin:0;font-size:clamp(22px,4.4vw,30px);font-weight:700;line-height:1.25;text-wrap:balance}
+h2 small{display:block;font-family:var(--f-pixel);font-size:10px;font-weight:400;color:var(--pink);letter-spacing:.08em;margin-top:6px}
+.lead{margin:0;font-size:17px;max-width:62ch;color:var(--steel)}
+.roster{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.roster li{display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.25);padding:10px;min-width:0}
+.roster img{width:52px;height:auto;image-rendering:pixelated;flex:0 0 auto}
+.roster .st{font-family:var(--f-pixel);font-size:8px;color:var(--yellow);letter-spacing:.08em}
+.roster b{display:block;font-size:16px;line-height:1.3}
+.roster span{display:block;font-size:13px;color:var(--steel);line-height:1.35}
+.howto{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--steel)}
+.howto b{color:var(--yellow);font-weight:600}
+.best{font-family:var(--f-pixel);font-size:9px;color:var(--steel);margin-right:auto}
+.best b{color:var(--yellow);font-weight:400}
+
+.scroll{background:#efe2c8;color:#2a1a10;padding:14px 16px;border:3px solid var(--ink);box-shadow:inset 0 0 0 3px #c9a97a}
+.scroll h3{margin:0 0 10px;font-family:var(--f-pixel);font-weight:400;font-size:10px;letter-spacing:.08em;color:var(--plum)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#fff8ea;border:2px solid #2a1a10;padding:5px 10px;font-weight:700;font-size:16px}
+.note{margin:10px 0 0;font-size:14px;line-height:1.5}
+.tw{overflow-x:auto}
+.scroll table{border-collapse:collapse;font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.scroll th,.scroll td{border:2px solid #2a1a10;padding:5px 10px;text-align:center;white-space:nowrap}
+.scroll th{background:#2a1a10;color:#efe2c8;font-weight:600}
+.quad{display:grid;grid-template-columns:repeat(2,minmax(0,120px));gap:0;margin-top:10px}
+.quad div{border:2px solid #2a1a10;padding:6px 8px;font-weight:700;font-size:14px;text-align:center}
+.quad div:nth-child(1){border-right-width:1px;border-bottom-width:1px}.quad div:nth-child(2){border-left-width:1px;border-bottom-width:1px}
+.quad div:nth-child(3){border-right-width:1px;border-top-width:1px}.quad div:nth-child(4){border-left-width:1px;border-top-width:1px}
+details.cheat summary{cursor:pointer;font-family:var(--f-pixel);font-size:9px;color:var(--lav);letter-spacing:.06em;padding:4px 0}
+details.cheat[open] summary{margin-bottom:10px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{background:rgba(0,0,0,.25);padding:10px 12px}
+.stat span{display:block;font-size:13px;color:var(--steel)}
+.stat b{font-family:var(--f-pixel);font-weight:400;font-size:15px;color:var(--yellow);font-variant-numeric:tabular-nums}
+.rank{font-family:var(--f-pixel);font-size:44px;color:var(--yellow);text-shadow:3px 3px 0 var(--red),6px 6px 0 var(--ink);line-height:1}
+
+@media (prefers-reduced-motion:reduce){
+  .screen.shake,.banner,.float,.timer.low i{animation:none}
+  .hpbar i{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">TRIG QUEST</div>
+    <div class="score">SCORE <b id="score">000000</b></div>
+    <button class="icon-btn" id="mute" type="button" aria-pressed="false">SOUND ON</button>
+  </header>
+
+  <div class="screen pframe" id="screen">
+    <canvas id="cv" width="160" height="90" aria-label="ฉากต่อสู้"></canvas>
+    <div class="logo" id="logo"><h1>TRIG QUEST</h1><p>ตะลุยปราสาทตรีโกณมิติ</p></div>
+    <div class="hud" id="hud" hidden>
+      <div><div class="hearts" id="hearts"></div><div class="combo" id="combo"></div></div>
+      <div class="hud-r"><div class="bname" id="bname"></div><div class="hpbar"><i class="ghost" id="hpGhost"></i><i class="fill" id="hpFill"></i></div></div>
+    </div>
+    <div class="banner" id="banner" hidden></div>
+    <div class="floats" id="floats"></div>
+    <div class="scan"></div>
+  </div>
+
+  <div class="timer idle" id="timer"><i id="timerFill"></i></div>
+
+  <section class="panel pframe" id="panel" aria-live="polite"></section>
+</div>
+
+<script>
+/*GEN-START*/
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function gcd(a,b){while(b){[a,b]=[b,a%b]}return a}
+function fr(n,d){if(d<0){n=-n;d=-d}const g=gcd(Math.abs(n),d)||1;n/=g;d/=g;const s=n<0?'−':'';n=Math.abs(n);return d===1?s+n:`${s}${n}/${d}`}
+const fmtN=n=>n<0?'−'+(-n):String(n);
+const neg=s=>s.startsWith('−')?s.slice(1):(s==='0'?'0':'−'+s);
+function mk(q,ans,pool,ex,fig,must=[]){
+  ans=String(ans);const ch=[ans];
+  for(const v of [...must.map(String),...shuffle(pool.map(String))]){if(ch.length>=4)break;if(v&&v!=='NaN'&&!ch.includes(v))ch.push(v)}
+  for(const v of ['0','1','−1','2','3','1/2']){if(ch.length>=4)break;if(!ch.includes(v))ch.push(v)}
+  const c=shuffle(ch);return {q,choices:c,ans:c.indexOf(ans),ex,fig};
+}
+const TRIPLES=[[3,4,5],[5,12,13],[8,15,17],[7,24,25],[6,8,10],[9,12,15],[20,21,29],[9,40,41]];
+
+/* Stage 1: ratios */
+function g1ratio(){
+  const [a,b,c]=pick(TRIPLES);const sw=Math.random()<.5;const opp=sw?b:a,adj=sw?a:b;const fn=pick(['sin','cos','tan']);
+  const v={sin:fr(opp,c),cos:fr(adj,c),tan:fr(opp,adj)};
+  const raw={sin:`${opp}/${c}`,cos:`${adj}/${c}`,tan:`${opp}/${adj}`}[fn];
+  const rule={sin:'ข้าม/ฉาก',cos:'ชิด/ฉาก',tan:'ข้าม/ชิด'}[fn];
+  return mk(`จากรูปสามเหลี่ยมมุมฉาก ${fn} θ มีค่าเท่าใด`,v[fn],[v.sin,v.cos,v.tan,fr(c,opp),fr(c,adj),fr(adj,opp)],
+    `${fn} θ = ${rule} = ${raw}${raw!==v[fn]?' = '+v[fn]:''}`,{opp:''+opp,adj:''+adj,hyp:''+c,flip:Math.random()<.5});
+}
+function g1side(){
+  const [a,b,c]=pick(TRIPLES.slice(0,6));const opp=a,adj=b;const w=pick(['hyp','opp','adj']);
+  const fig={opp:''+opp,adj:''+adj,hyp:''+c,flip:Math.random()<.5};let ans,ex;
+  if(w==='hyp'){fig.hyp='?';ans=c;ex=`ฉาก² = ${opp}² + ${adj}² = ${opp*opp+adj*adj} → ฉาก = ${c}`}
+  else if(w==='opp'){fig.opp='?';ans=opp;ex=`ข้าม² = ${c}² − ${adj}² = ${c*c-adj*adj} → ข้าม = ${opp}`}
+  else{fig.adj='?';ans=adj;ex=`ชิด² = ${c}² − ${opp}² = ${c*c-opp*opp} → ชิด = ${adj}`}
+  const pool=[ans+1,ans-1,ans+2,ans+3,a+b,c+1,Math.abs(c-a),Math.abs(c-b)].filter(x=>x>0&&x!==ans);
+  return mk('ด้านที่มีเครื่องหมาย ? ยาวกี่หน่วย (ใช้ทฤษฎีบทพีทาโกรัส)',ans,pool,ex,fig);
+}
+function g1find(){
+  const [a,b,c]=pick([[3,4,5],[5,12,13],[8,15,17]]);const k=pick([2,3]);const fn=pick(['sin','cos']);
+  const hyp=c*k,ans=(fn==='sin'?a:b)*k;
+  const fig={opp:fn==='sin'?'?':'',adj:fn==='cos'?'?':'',hyp:''+hyp,flip:Math.random()<.5};
+  const side=fn==='sin'?'ด้านตรงข้ามมุม θ':'ด้านประชิดมุม θ';
+  return mk(`ถ้า ${fn} θ = ${fn==='sin'?a:b}/${c} และด้านตรงข้ามมุมฉากยาว ${hyp} หน่วย ${side} ยาวเท่าใด`,ans,
+    [(fn==='sin'?b:a)*k,ans+k,ans-k,c,a*b,hyp-ans].filter(x=>x>0),`${fn} θ = ${fn==='sin'?'ข้าม/ฉาก':'ชิด/ฉาก'} → ${fn==='sin'?a:b}/${c} = ?/${hyp} → ? = ${ans}`,fig);
+}
+const C1=[
+ ['tan θ เท่ากับข้อใด','sin θ / cos θ',['cos θ / sin θ','sin θ · cos θ','1 / sin θ'],'tan θ = ข้าม/ชิด = (ข้าม/ฉาก) ÷ (ชิด/ฉาก) = sin θ / cos θ'],
+ ['cosec θ เท่ากับข้อใด','1 / sin θ',['1 / cos θ','1 / tan θ','cos θ / sin θ'],'cosec เป็นส่วนกลับของ sin'],
+ ['sec θ เท่ากับข้อใด','1 / cos θ',['1 / sin θ','1 / tan θ','sin θ / cos θ'],'sec เป็นส่วนกลับของ cos'],
+ ['cot θ เท่ากับข้อใด','cos θ / sin θ',['sin θ / cos θ','1 / sin θ','1 / cos θ'],'cot = 1/tan = cos θ / sin θ'],
+ ['ถ้า 0° < θ < 90° ค่า sin θ อยู่ในช่วงใด','มากกว่า 0 แต่น้อยกว่า 1',['มากกว่า 1 ได้','เป็นลบได้','เท่ากับ 1 เสมอ'],'ด้านตรงข้ามมุมฉากยาวที่สุดเสมอ ข้าม/ฉาก จึงน้อยกว่า 1'],
+ ['ถ้า sin θ = cos θ และ 0° < θ < 90° แล้ว θ เท่ากับเท่าใด','45°',['30°','60°','90°'],'ข้าม = ชิด เกิดในสามเหลี่ยมมุมฉากหน้าจั่ว ซึ่งมีมุม 45°'],
+ ['ด้านใดยาวที่สุดในสามเหลี่ยมมุมฉาก','ด้านตรงข้ามมุมฉาก',['ด้านตรงข้ามมุม θ','ด้านประชิดมุม θ','ยาวเท่ากันทุกด้าน'],'ด้านที่อยู่ตรงข้ามมุมใหญ่ที่สุด (90°) ยาวที่สุด'],
+];
+const g1concept=()=>{const [q,a,p,e]=pick(C1);return mk(q,a,p,e)};
+
+/* Stage 2: special angles & radians */
+const SPEC={sin:{0:'0',30:'1/2',45:'√2/2',60:'√3/2',90:'1'},cos:{0:'1',30:'√3/2',45:'√2/2',60:'1/2',90:'0'},tan:{0:'0',30:'√3/3',45:'1',60:'√3',90:'ไม่นิยาม'}};
+const SPOOL=['0','1/2','√2/2','√3/2','1','√3','√3/3','2'];
+function g2val(){
+  const fn=pick(['sin','cos','tan']);const a=pick([30,45,60,30,45,60,0,90]);const ans=SPEC[fn][a];
+  const hint={sin:'จำ: sin 0°, 30°, 45°, 60°, 90° = √0/2, √1/2, √2/2, √3/2, √4/2',cos:'cos เรียงกลับด้านกับ sin: cos θ = sin(90° − θ)',tan:'tan θ = sin θ / cos θ'}[fn];
+  return mk(`${fn} ${a}° มีค่าเท่าใด`,ans,fn==='tan'?[...SPOOL,'ไม่นิยาม']:SPOOL,`${fn} ${a}° = ${ans} · ${hint}`);
+}
+const C2=[
+ ['sin 30° + cos 60°','1','1/2 + 1/2 = 1'],['2 sin 30° cos 30°','√3/2','2 · 1/2 · √3/2 = √3/2'],
+ ['tan 45° + sin 90°','2','1 + 1 = 2'],['sin 60° · cos 30°','3/4','√3/2 · √3/2 = 3/4'],
+ ['tan² 60°','3','(√3)² = 3'],['cos² 30° − sin² 30°','1/2','3/4 − 1/4 = 1/2'],
+ ['sin 45° · cos 45°','1/2','√2/2 · √2/2 = 2/4 = 1/2'],['tan 30° · tan 60°','1','√3/3 · √3 = 3/3 = 1'],
+ ['sin 60° / cos 60°','√3','(√3/2) ÷ (1/2) = √3'],['4 sin 30° cos 60°','1','4 · 1/2 · 1/2 = 1'],
+ ['2 cos² 45°','1','2 · (√2/2)² = 2 · 2/4 = 1'],['sin² 60° + cos² 60°','1','3/4 + 1/4 = 1'],
+];
+const C2POOL=['0','1/2','1','3/2','2','3','√3','√3/2','3/4','1/4','√2','√3/3'];
+const g2expr=()=>{const [e,a,x]=pick(C2);return mk(`ค่าของ ${e} เท่ากับเท่าใด`,a,C2POOL,`${e} = ${x}`)};
+const RAD=[[30,'π/6'],[45,'π/4'],[60,'π/3'],[90,'π/2'],[120,'2π/3'],[135,'3π/4'],[150,'5π/6'],[180,'π'],[270,'3π/2'],[360,'2π']];
+function g2rad(){
+  const [d,r]=pick(RAD);
+  if(Math.random()<.5)return mk(`${d}° เท่ากับกี่เรเดียน`,r,RAD.map(x=>x[1]),`${d}° × π/180° = ${r}`);
+  return mk(`${r} เรเดียน เท่ากับกี่องศา`,`${d}°`,RAD.map(x=>x[0]+'°'),`${r} × 180°/π = ${d}°`);
+}
+function g2inv(){
+  const fn=pick(['sin','cos','tan']);const a=pick([30,45,60]);const v=SPEC[fn][a];
+  return mk(`ถ้า ${fn} θ = ${v} และ 0° < θ < 90° แล้ว θ เท่ากับเท่าใด`,`${a}°`,['0°','30°','45°','60°','90°'],`${fn} ${a}° = ${v}`);
+}
+
+/* Stage 3: identities & quadrants */
+const VALS=[[.5,'1/2'],[Math.SQRT2/2,'√2/2'],[Math.sqrt(3)/2,'√3/2'],[1,'1'],[Math.sqrt(3),'√3'],[Math.sqrt(3)/3,'√3/3']];
+function valStr(v){if(Math.abs(v)<1e-9)return'0';for(const [x,s] of VALS)if(Math.abs(Math.abs(v)-x)<1e-9)return(v<0?'−':'')+s;return v.toFixed(3)}
+const quad=a=>a<90?1:a<180?2:a<270?3:4;
+const refAng=a=>{const q=quad(a);return q===1?a:q===2?180-a:q===3?a-180:360-a};
+const SIGNTXT={1:'ควอดรันต์ 1 บวกทุกฟังก์ชัน',2:'ควอดรันต์ 2 มีแค่ sin เป็นบวก',3:'ควอดรันต์ 3 มีแค่ tan เป็นบวก',4:'ควอดรันต์ 4 มีแค่ cos เป็นบวก'};
+function g3angle(){
+  const ang=pick([120,135,150,210,225,240,300,315,330]);const fn=pick(['sin','cos','tan']);const r=ang*Math.PI/180;
+  const v={sin:Math.sin(r),cos:Math.cos(r),tan:Math.tan(r)}[fn];const ans=valStr(v);const mag=valStr(Math.abs(v));
+  const Q=quad(ang),ref=refAng(ang);
+  return mk(`${fn} ${ang}° มีค่าเท่าใด`,ans,['1/2','√2/2','√3/2','1','√3','√3/3'].flatMap(s=>[s,'−'+s]),
+    `${ang}° อยู่ควอดรันต์ ${Q} มุมอ้างอิง ${ref}° → ${fn} ${ref}° = ${mag} และ${SIGNTXT[Q]} ดังนั้น ${fn} ${ang}° = ${ans}`,null,[neg(ans)]);
+}
+function g3pyth(){
+  const [a,b,c]=pick(TRIPLES.slice(0,4));const Q=pick([2,3,4]);const sS=Q<=2?1:-1,sC=(Q===1||Q===4)?1:-1;
+  const given=pick(['sin','cos']);const ask=given==='sin'?pick(['cos','tan']):pick(['sin','tan']);
+  const v={sin:fr(sS*a,c),cos:fr(sC*b,c),tan:fr(sS*sC*a,b)};
+  return mk(`ถ้า ${given} θ = ${v[given]} และ θ อยู่ในควอดรันต์ที่ ${Q} แล้ว ${ask} θ เท่ากับเท่าใด`,v[ask],
+    [fr(a,c),fr(-a,c),fr(b,c),fr(-b,c),fr(a,b),fr(-a,b),fr(b,a),fr(-b,a)],
+    `sin²θ + cos²θ = 1 → |sin θ| = ${a}/${c}, |cos θ| = ${b}/${c} · ใน Q${Q}: sin ${sS>0?'บวก':'ลบ'}, cos ${sC>0?'บวก':'ลบ'} → ${ask} θ = ${v[ask]}`,null,[neg(v[ask])]);
+}
+const C3=[
+ ['sin²θ + cos²θ เท่ากับเท่าใด','1',['0','2','tan²θ'],'จุด (cos θ, sin θ) อยู่บนวงกลมรัศมี 1 จึงได้ x² + y² = 1'],
+ ['1 + tan²θ เท่ากับข้อใด','sec²θ',['cosec²θ','cot²θ','1'],'นำ sin²θ + cos²θ = 1 หารด้วย cos²θ'],
+ ['1 + cot²θ เท่ากับข้อใด','cosec²θ',['sec²θ','tan²θ','1'],'นำ sin²θ + cos²θ = 1 หารด้วย sin²θ'],
+ ['sin(180° − θ) เท่ากับข้อใด','sin θ',['−sin θ','cos θ','−cos θ'],'180° − θ อยู่ควอดรันต์ 2 ซึ่ง sin เป็นบวก'],
+ ['cos(180° − θ) เท่ากับข้อใด','−cos θ',['cos θ','sin θ','−sin θ'],'180° − θ อยู่ควอดรันต์ 2 ซึ่ง cos เป็นลบ'],
+ ['sin(−θ) เท่ากับข้อใด','−sin θ',['sin θ','cos θ','−cos θ'],'มุมติดลบสะท้อนจุดข้ามแกน x ค่า y (sin) จึงกลับเครื่องหมาย'],
+ ['cos(−θ) เท่ากับข้อใด','cos θ',['−cos θ','sin θ','−sin θ'],'มุมติดลบสะท้อนจุดข้ามแกน x ค่า x (cos) ไม่เปลี่ยน'],
+ ['sin(90° − θ) เท่ากับข้อใด','cos θ',['sin θ','−cos θ','tan θ'],'มุมที่รวมกันได้ 90°: sin ของมุมหนึ่ง = cos ของอีกมุม'],
+ ['tan(180° + θ) เท่ากับข้อใด','tan θ',['−tan θ','cot θ','−cot θ'],'tan มีคาบ 180°'],
+ ['(1 − cos²θ) / sin θ เท่ากับข้อใด (sin θ ≠ 0)','sin θ',['cos θ','1','sin²θ'],'1 − cos²θ = sin²θ หารด้วย sin θ เหลือ sin θ'],
+ ['ถ้า sin θ > 0 แต่ cos θ < 0 มุม θ อยู่ควอดรันต์ใด','ควอดรันต์ที่ 2',['ควอดรันต์ที่ 1','ควอดรันต์ที่ 3','ควอดรันต์ที่ 4'],'y บวก x ลบ คือควอดรันต์ 2'],
+ ['ในควอดรันต์ที่ 3 ฟังก์ชันใดมีค่าเป็นบวก','tan θ',['sin θ','cos θ','ไม่มีเลย'],'x และ y ลบทั้งคู่ tan = y/x จึงเป็นบวก'],
+ ['ในควอดรันต์ที่ 4 ฟังก์ชันใดมีค่าเป็นบวก','cos θ',['sin θ','tan θ','ทุกฟังก์ชัน'],'x บวก y ลบ จึงมีแค่ cos ที่เป็นบวก'],
+];
+const g3iden=()=>{const [q,a,p,e]=pick(C3);return mk(q,a,p,e)};
+function g3ref(){
+  const ang=pick([110,135,160,200,225,250,290,315,340,120,150,210,240,300,330]);const r=refAng(ang),Q=quad(ang);
+  const rule={2:'180° − θ',3:'θ − 180°',4:'360° − θ'}[Q];
+  return mk(`มุมอ้างอิงของ ${ang}° เท่ากับเท่าใด`,`${r}°`,[r+10,r-10,90-r,Math.abs(ang-90),r+20,r+30].filter(x=>x>0&&x<90&&x!==r).map(x=>x+'°'),
+    `${ang}° อยู่ควอดรันต์ ${Q} มุมอ้างอิง = ${rule} = ${r}°`);
+}
+
+/* Stage 4: graphs, laws, double angle, inverse */
+const PER={1:'2π',2:'π',3:'2π/3',4:'π/2'};
+function g4graph(){
+  const A=pick([2,3,4,5]),B=pick([1,2,3,4]),C=pick([0,1,-1,2,-2]);const fn=pick(['sin','cos']);
+  const ex=`y = ${A} ${fn} ${B===1?'':B}x${C>0?' + '+C:C<0?' − '+(-C):''}`;const k=pick(['amp','per','max','min']);
+  const L={amp:'แอมพลิจูด',per:'คาบ',max:'ค่าสูงสุดของ y',min:'ค่าต่ำสุดของ y'}[k];
+  const q=`กำหนด ${ex} ${L} เท่ากับเท่าใด`;
+  if(k==='amp')return mk(q,A,[A+C,2*A,B,A+1,A-1,C].map(fmtN),`แอมพลิจูด = |A| = ${A}`);
+  if(k==='per')return mk(q,PER[B],['2π','π','2π/3','π/2','4π','π/3','π/4'],`คาบ = 2π ÷ |B| = 2π ÷ ${B} = ${PER[B]}`);
+  if(k==='max')return mk(q,fmtN(A+C),[A,A-C,C,A+C+1,2*A+C,C-A].map(fmtN),`${fn} มีค่าสูงสุด 1 → y = ${A}(1)${C?(C>0?' + ':' − ')+Math.abs(C):''} = ${fmtN(A+C)}`);
+  return mk(q,fmtN(C-A),[-A,C+A,C,-A-C,C-A-1,-C].map(fmtN),`${fn} มีค่าต่ำสุด −1 → y = ${A}(−1)${C?(C>0?' + ':' − ')+Math.abs(C):''} = ${fmtN(C-A)}`);
+}
+function g4cos(){
+  const a=ri(2,9);let b=ri(2,9);while(b===a)b=ri(2,9);const C=pick([60,90,120]);const base=a*a+b*b;
+  const v={60:base-a*b,90:base,120:base+a*b};const cs={60:'1/2',90:'0',120:'−1/2'}[C];
+  return mk(`สามเหลี่ยม ABC มี a = ${a}, b = ${b} และมุม C = ${C}° ค่า c² เท่ากับเท่าใด`,v[C],[v[60],v[90],v[120],base-2*a*b,(a+b)**2],
+    `c² = a² + b² − 2ab cos C = ${a*a} + ${b*b} − 2(${a})(${b})(${cs}) = ${v[C]}`);
+}
+function g4area(){
+  const a=pick([2,4,6,8,10,12]),b=pick([4,6,8,10]);const C=pick([30,90,150]);const area=C===90?a*b/2:a*b/4;
+  return mk(`สามเหลี่ยมมีด้านยาว ${a} และ ${b} หน่วย มุมระหว่างสองด้านนี้ ${C}° พื้นที่เท่ากับกี่ตารางหน่วย`,area,
+    [a*b/2,a*b/4,a*b,`${a*b/4}√3`,a+b],`พื้นที่ = ½ab sin C = ½(${a})(${b})(${C===90?'1':'1/2'}) = ${area}`);
+}
+function g4sin(){
+  const a=pick([4,5,6,7,8,10]);
+  if(Math.random()<.4){
+    const A=pick([30,90]);const R=A===30?''+a:fr(a,2);
+    return mk(`สามเหลี่ยม ABC มี a = ${a} และ A = ${A}° รัศมีวงกลมล้อมรอบ R เท่ากับเท่าใด`,R,[2*a,fr(a,2),a,`${a}√3`,4*a,fr(a,4)],
+      `a / sin A = 2R → ${a} ÷ ${A===30?'1/2':'1'} = 2R → R = ${R}`);
+  }
+  const [A,B]=pick([[30,90],[30,60],[45,90]]);const ans=A===30&&B===90?''+2*a:B===60?`${a}√3`:`${a}√2`;
+  const sA=A===30?'1/2':'√2/2',sB=B===90?'1':'√3/2';
+  return mk(`สามเหลี่ยม ABC มี a = ${a}, A = ${A}° และ B = ${B}° ด้าน b ยาวเท่าใด`,ans,[''+2*a,`${a}√3`,`${a}√2`,fr(a,2),`${2*a}√3`,''+a],
+    `a / sin A = b / sin B → b = ${a} × (${sB}) ÷ (${sA}) = ${ans}`);
+}
+function g4double(){
+  const [a,b,c]=pick(TRIPLES.slice(0,4));const s2=fr(2*a*b,c*c),c2=fr(b*b-a*a,c*c);const isS=Math.random()<.5;
+  return mk(`ถ้า sin θ = ${a}/${c} และ cos θ = ${b}/${c} แล้ว ${isS?'sin 2θ':'cos 2θ'} เท่ากับเท่าใด`,isS?s2:c2,
+    [s2,c2,neg(c2),fr(2*a,c),fr(a*b,c*c),fr(2*b,c)],
+    isS?`sin 2θ = 2 sin θ cos θ = 2(${a}/${c})(${b}/${c}) = ${s2}`:`cos 2θ = cos²θ − sin²θ = ${b*b}/${c*c} − ${a*a}/${c*c} = ${c2}`);
+}
+const C4INV=[['arcsin','1/2','π/6'],['arccos','1/2','π/3'],['arctan','1','π/4'],['arcsin','1','π/2'],['arccos','0','π/2'],['arctan','√3','π/3'],
+ ['arccos','−1/2','2π/3'],['arcsin','−1/2','−π/6'],['arctan','−1','−π/4'],['arccos','−1','π']];
+function g4inv(){
+  const [f,x,a]=pick(C4INV);const base=f.slice(3);const rng=f==='arccos'?'[0, π]':'[−π/2, π/2]';
+  return mk(`${f}(${x}) เท่ากับเท่าใด`,a,['π/6','π/3','π/4','π/2','2π/3','−π/6','−π/4','5π/6','π','−π/3','0'],
+    `${base}(${a}) = ${x} และ ${a} อยู่ในช่วงค่าหลักของ ${f} คือ ${rng}`);
+}
+const GENS=[[g1ratio,g1ratio,g1side,g1find,g1concept],[g2val,g2val,g2expr,g2rad,g2inv],[g3angle,g3angle,g3pyth,g3iden,g3ref],[g4graph,g4cos,g4area,g4sin,g4double,g4inv]];
+/*GEN-END*/
+
+const $=s=>document.querySelector(s);
+const PAL={K:'#0b0a18',w:'#fff1e8',W:'#c2c3c7',G:'#5f574f',R:'#ff004d',r:'#7e2553',S:'#ffccaa',B:'#29adff',b:'#1d2b53',Y:'#ffec27',O:'#ffa300',N:'#ab5236',g:'#00e436',d:'#008751',s:'#83769c',p:'#7e2553',q:'#ff77a8'};
+const mirror=rows=>rows.map(r=>r+[...r].reverse().join(''));
+function buildSprite(rows){
+  const h=rows.length,w=rows[0].length;
+  const mk=o=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');
+    rows.forEach((row,y)=>[...row].forEach((ch,i)=>{if(ch==='.')return;x.fillStyle=o||PAL[ch];x.fillRect(i,y,1,1)}));return c};
+  return {w,h,n:mk(),white:mk('#fff1e8'),red:mk('#ff004d')};
+}
+const HERO=buildSprite([
+"......RRR.......",".....RRr........","....KKKKKK......","...KwwWWWGK.....","...KwWWWWGK.....","...KWKKKKKK.....",
+"...KWKYKKYK.....","...KWWWWWGK...Kw","....KKKKKK...KwK","..KKBBBBBBK.KwK.",".KWKBBYYBBKKwK..",".KWKBBYYBBSSK...",
+".KWKBBBBBBKK....","..KKbbbbbbK.....","...KGGK.KGGK....","...KNNK.KNNK...."]);
+const SLIME=buildSprite([
+"..........KKKK..........","........KKggwwKK........","......KKggggggwwKK......",".....KggggggggggwgK.....",
+"....KggggggggggggggK....","...KgggwwwggggwwwgggK...","..KgggwwKwggggwwKwgggdK.","..KgggwKKwggggwKKwgggdK.",
+".KggggwwwggggggwwwggggdK",".KgggggggggggggggggggddK","KggKKggggKKggggKKggggddK","KgKggKggKggKggKggKggdddK",
+"KggggggggggggggggggddddK","KdgggggggggggggggggddddK",".KddggggggggggggggdddddK","..KKddddddddddddddddKK..","....KKKKKKKKKKKKKKKK...."]);
+const GOLEM=buildSprite([
+"........KKKKKKKK........",".......KsssssssGK.......",".......KsOOssOOGK.......",".......KssssssGGK.......",
+".......KsKKKKKGGK.......","....KKKKKKKKKKKKKKKK....","...KsssKssssssssKsssK...","..KssssKssssYsssKssssK..",
+"..KssssKsssYYsssKssssK..","..KsssGKssYsYsssKGsssK..","..KsssGKsYssYsssKGsssK..","..KsssGKYYYYYsssKGsssK..",
+"..KssGGKssssssssKGGssK..","..KKKKKKssssssssKKKKKK..","..KGGGKKssssssssKKGGGK..","..KGGGK.KsssssGK.KGGGK..",
+"...KKK..KssssGGK..KKK...","........KsssKGGK........",".......KGssK.KGGK.......",".......KGGGK.KGGK.......","......KKKKKK.KKKKK......"]);
+const DRAGON=buildSprite(mirror([
+"........K...",".......KwK..",".......KwK..","K......KRKKK","KK.....KRRRR","KrK...KRRRRR","KrrK..KRYKRR",
+"KrrrK.KRYYRR","KrRrrKKRRRRR","KrRRrrKKRRRR","KrRRRrrKRwKR",".KrRRRrrKKKK",".KrRRRRrKOOO","..KrRRKKKOYO",
+"..KrRK.KROOO","...KK..KRROO",".......KRRRR","......KRRKKK","......KRK...","......KKK..."]));
+const LICH=buildSprite(mirror([
+"..........Y....Y","..........YY..YY","..........YYYYYY",".........KYOYYOY",".........KKKKKKK","........KwwwwwwW",
+"........KwwwwwwW","........KwKKKwwW","........KwKRKwwW","........KwwwwwKK","........KKwKwKwK","....KKKKpKKKKKKp",
+"...KppppqKppppqp","..KpppppqKpppqpp",".KpppppqqKppqppp","KwKppppqKKpqpppp","KwwKpppqKpqppppY",".KKKpppqKqppppYY",
+"....KppqKppppppp","....KppqKppppppp","...KpppqKppppppp","...KppqKpppppppp","..KpppqKpppppppp","..KppqKppppppppp",
+".KpppqKppppppppp",".KKKKKKKKKKKKKKK"]));
+
+const BOSSES=[
+ {name:'สไลม์ไซน์',en:'SINE SLIME',topic:'อัตราส่วนตรีโกณมิติ',hp:90,sp:SLIME,time:25,proj:'blob',
+  tip:`<div class="chips"><span class="chip">sin θ = ข้าม / ฉาก</span><span class="chip">cos θ = ชิด / ฉาก</span><span class="chip">tan θ = ข้าม / ชิด</span></div>
+  <p class="note">ฉาก = ด้านตรงข้ามมุมฉาก · ข้าม = ด้านตรงข้ามมุม θ · ชิด = ด้านประชิดมุม θ<br>ส่วนกลับ: cosec = 1/sin, sec = 1/cos, cot = 1/tan · พีทาโกรัส: ฉาก² = ข้าม² + ชิด²</p>`},
+ {name:'โกเลมมุมพิเศษ',en:'ANGLE GOLEM',topic:'ค่ามุมพิเศษ 30° 45° 60° และเรเดียน',hp:110,sp:GOLEM,time:22,proj:'rock',
+  tip:`<div class="tw"><table><tr><th>θ</th><th>0°</th><th>30°</th><th>45°</th><th>60°</th><th>90°</th></tr>
+  <tr><th>sin</th><td>0</td><td>1/2</td><td>√2/2</td><td>√3/2</td><td>1</td></tr>
+  <tr><th>cos</th><td>1</td><td>√3/2</td><td>√2/2</td><td>1/2</td><td>0</td></tr>
+  <tr><th>tan</th><td>0</td><td>√3/3</td><td>1</td><td>√3</td><td>–</td></tr></table></div>
+  <p class="note">π เรเดียน = 180° · องศา → เรเดียน คูณ π/180 · เรเดียน → องศา คูณ 180/π</p>`},
+ {name:'มังกรควอดรันต์',en:'QUADRANT DRAGON',topic:'เอกลักษณ์และมุมในทุกควอดรันต์',hp:130,sp:DRAGON,time:25,proj:'fire',
+  tip:`<div class="chips"><span class="chip">sin²θ + cos²θ = 1</span><span class="chip">1 + tan²θ = sec²θ</span><span class="chip">1 + cot²θ = cosec²θ</span></div>
+  <div class="quad"><div>Q2 · sin +</div><div>Q1 · ทุกตัว +</div><div>Q3 · tan +</div><div>Q4 · cos +</div></div>
+  <p class="note">มุมอ้างอิง: Q2 → 180° − θ · Q3 → θ − 180° · Q4 → 360° − θ แล้วเติมเครื่องหมายตามควอดรันต์</p>`},
+ {name:'จอมเวทวงกลมหนึ่งหน่วย',en:'UNIT CIRCLE LICH',topic:'กราฟ ฟังก์ชันผกผัน กฎของ sin และ cos',hp:160,sp:LICH,time:30,proj:'orb',
+  tip:`<div class="chips"><span class="chip">y = A sin Bx + C → แอมพลิจูด |A|, คาบ 2π/|B|</span><span class="chip">c² = a² + b² − 2ab cos C</span>
+  <span class="chip">a/sin A = b/sin B = 2R</span><span class="chip">พื้นที่ = ½ab sin C</span><span class="chip">sin 2θ = 2 sin θ cos θ</span><span class="chip">cos 2θ = cos²θ − sin²θ</span></div>
+  <p class="note">ช่วงค่าหลัก: arcsin, arctan ∈ [−π/2, π/2] · arccos ∈ [0, π]</p>`},
+];
+
+/* ---------- Backgrounds ---------- */
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const BAYER=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+const GY=74;
+const THEMES=[
+ {sky:['#2b5fd0','#29adff','#7fd4ff','#c8f1ff'],g:['#00e436','#ab5236','#8a3f28'],amb:['#fff1e8','#ffec27'],ambUp:false,
+  deco(x,R){x.fillStyle='#ffec27';for(let y=-6;y<=6;y++)for(let i=-6;i<=6;i++)if(i*i+y*y<=34)x.fillRect(26+i,15+y,1,1);
+    x.fillStyle='#fff1e8';[[60,12,14],[96,20,18],[132,9,12]].forEach(([cx,cy,w])=>{x.fillRect(cx,cy,w,3);x.fillRect(cx+3,cy-2,w-6,2);x.fillRect(cx+2,cy+3,w-4,1)});
+    ridge(x,'#83769c',50,6,.045,.11,1);ridge(x,'#008751',63,4,.08,.17,3);
+    x.fillStyle='#00e436';for(let i=0;i<160;i+=ri(5,11))x.fillRect(i,GY-1,1,1)}},
+ {sky:['#1d2b53','#7e2553','#ab5236','#ffa300'],g:['#83769c','#5f574f','#4a434a'],amb:['#c2c3c7','#83769c'],ambUp:false,
+  deco(x,R){x.fillStyle='#fff1e8';for(let i=0;i<14;i++)x.fillRect(Math.floor(R()*160),Math.floor(R()*20),1,1);
+    jag(x,'#5f574f',44,14,R);jag(x,'#2a2433',60,8,R);
+    x.fillStyle='#29adff';[[22,58],[70,62],[100,57]].forEach(([cx,cy])=>{x.fillRect(cx,cy-3,1,6);x.fillRect(cx-1,cy-1,3,3)});}},
+ {sky:['#1a0a1e','#7e2553','#c0263a','#ff004d'],g:['#ffa300','#5f2a1e','#3e1a14'],amb:['#ffa300','#ffec27','#ff004d'],ambUp:true,
+  deco(x,R){x.fillStyle='#3a1f2a';for(let y=22;y<GY;y++){const hw=Math.round((y-22)*1.15)+6;x.fillRect(60-hw,y,hw*2,1)}
+    x.fillStyle='#ff004d';x.fillRect(55,22,10,2);x.fillStyle='#ffa300';x.fillRect(57,22,6,1);
+    x.fillStyle='#ff004d';for(let k=0;k<3;k++){let cx=56+k*4;for(let y=24;y<44+k*6;y++){if(R()<.3)cx+=R()<.5?-1:1;x.fillRect(cx,y,1,1)}}
+    ridge(x,'#24121a',64,3,.1,.2,2)}},
+ {sky:['#05040c','#0d0b1e','#1d1238','#2e1a52'],g:['#83769c','#2a2350','#1d1838'],amb:['#ff77a8','#83769c'],ambUp:true,
+  deco(x,R){for(let i=0;i<60;i++){x.fillStyle=R()<.2?'#ffec27':R()<.5?'#83769c':'#fff1e8';x.fillRect(Math.floor(R()*160),Math.floor(R()*66),1,1)}
+    [[6,10],[146,10]].forEach(([px,w])=>{x.fillStyle='#1d2b53';x.fillRect(px,26,w,GY-26);x.fillStyle='#29366f';x.fillRect(px,26,2,GY-26);
+      x.fillStyle='#2a2350';x.fillRect(px-2,24,w+4,3);for(let y=32;y<GY;y+=8){x.fillStyle='#0d0b1e';x.fillRect(px+3,y,w-5,1)}});}},
+];
+function ridge(x,c,base,amp,f1,f2,ph){x.fillStyle=c;for(let i=0;i<160;i++){const h=Math.round(base-(Math.sin(i*f1+ph)*amp+Math.sin(i*f2+ph*2)*amp*.5));x.fillRect(i,h,1,GY-h)}}
+function jag(x,c,base,amp,R){x.fillStyle=c;let h=base;for(let i=0;i<160;i++){h+=R()<.5?-1:1;h=Math.max(base-amp,Math.min(base+amp/2,h));const pk=Math.round(base-Math.abs(Math.sin(i*.07))*amp);x.fillRect(i,Math.min(h,pk),1,GY-Math.min(h,pk))}}
+function makeBG(ti){
+  const th=THEMES[ti],c=document.createElement('canvas');c.width=160;c.height=90;const x=c.getContext('2d');const R=rng(ti*97+11);
+  const n=th.sky.length;
+  for(let y=0;y<GY;y++)for(let i=0;i<160;i++){const t=y/GY*(n-1);let k=Math.floor(t);if(t-k>(BAYER[y%4][i%4]+.5)/16&&k<n-1)k++;x.fillStyle=th.sky[k];x.fillRect(i,y,1,1)}
+  th.deco(x,R);
+  for(let y=GY;y<90;y++)for(let i=0;i<160;i++){x.fillStyle=y===GY?th.g[0]:((Math.floor(i/8)+Math.floor((y-GY-1)/8))%2?th.g[1]:th.g[2]);x.fillRect(i,y,1,1)}
+  x.fillStyle='rgba(0,0,0,.25)';x.fillRect(0,GY+1,160,1);
+  for(let k=0;k<40;k++){x.fillStyle=R()<.5?'rgba(255,241,232,.12)':'rgba(0,0,0,.18)';x.fillRect(Math.floor(R()*160),GY+2+Math.floor(R()*14),1,1)}
+  if(ti===2){x.fillStyle='#ff004d';for(let k=0;k<6;k++){let cx=Math.floor(R()*160),cy=GY+3+Math.floor(R()*10);for(let s=0;s<6;s++){x.fillRect(cx,cy,1,1);cx+=1;cy+=R()<.5?0:(R()<.5?-1:1)}}}
+  return c;
+}
+const BGS=[0,1,2,3].map(makeBG);
+
+/* ---------- Audio ---------- */
+let actx=null,master=null,muted=false;
+function initAudio(){if(actx){actx.resume&&actx.resume();return}try{actx=new(window.AudioContext||window.webkitAudioContext)();master=actx.createGain();master.gain.value=.22;master.connect(actx.destination)}catch(e){actx=null}}
+const mf=n=>440*Math.pow(2,(n-69)/12);
+function tone(f,dur,type='square',vol=.2,delay=0,slide=0){if(!actx||muted)return;const t=actx.currentTime+Math.max(0,delay);const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.linearRampToValueAtTime(Math.max(30,f+slide),t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.02)}
+function noise(dur,vol=.3,delay=0){if(!actx||muted)return;const t=actx.currentTime+delay;const len=Math.floor(actx.sampleRate*dur);const b=actx.createBuffer(1,len,actx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);const s=actx.createBufferSource(),g=actx.createGain();s.buffer=b;g.gain.value=vol;s.connect(g);g.connect(master);s.start(t)}
+const SFX={
+  sel(){tone(880,.05,'square',.12)},
+  hit(){noise(.14,.35);tone(240,.12,'square',.25,0,-140)},
+  crit(){noise(.18,.4);[523,659,784,1047].forEach((f,i)=>tone(f,.08,'square',.18,i*.05))},
+  hurt(){noise(.2,.3);tone(320,.3,'sawtooth',.25,0,-220)},
+  ok(){tone(660,.07,'square',.15);tone(990,.12,'square',.15,.07)},
+  bad(){tone(180,.28,'square',.18,0,-60)},
+  win(){[72,76,79,84,79,84].forEach((n,i)=>tone(mf(n),i===5?.5:.12,'square',.2,i*.12))},
+  lose(){[67,63,60,55].forEach((n,i)=>tone(mf(n),.28,'triangle',.25,i*.22))},
+};
+const SONGS=[
+ {bpm:150,lead:[72,0,76,79,77,0,76,74,72,0,74,76,79,0,77,0],bass:[48,0,55,0,53,0,55,0,48,0,55,0,53,0,52,0]},
+ {bpm:132,lead:[69,0,72,76,74,72,71,0,69,0,76,0,74,72,71,72],bass:[45,0,52,0,43,0,50,0,41,0,48,0,40,0,47,0]},
+ {bpm:168,lead:[74,77,81,77,74,77,81,82,81,77,74,72,74,0,74,0],bass:[38,38,50,38,46,46,58,46,45,45,57,45,38,38,50,38]},
+ {bpm:120,lead:[76,0,77,0,76,74,72,71,76,0,79,77,76,0,0,0],bass:[40,40,41,41,40,40,38,38,40,40,43,43,41,41,40,40]},
+];
+const mus={on:false,step:0,next:0,pat:null,timer:null};
+function startMusic(i){if(!actx)return;mus.pat=SONGS[i];mus.step=0;mus.next=actx.currentTime+.1;mus.on=true;if(!mus.timer)mus.timer=setInterval(schedMusic,60)}
+function stopMusic(){mus.on=false}
+function schedMusic(){if(!mus.on||!actx)return;const sp=60/mus.pat.bpm/2;while(mus.next<actx.currentTime+.18){const s=mus.step%16;const l=mus.pat.lead[s],b=mus.pat.bass[s];const d=mus.next-actx.currentTime;if(l)tone(mf(l),sp*.85,'square',.045,d);if(b)tone(mf(b),sp*.9,'triangle',.11,d);mus.next+=sp;mus.step++}}
+
+/* ---------- Scene ---------- */
+const cv=$('#cv'),ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
+const S={mode:'title',theme:3,heroA:null,bossA:null,bossVis:false,bossDead:false,proj:[],parts:[],amb:[],slashT:-1e9};
+const lerp=(a,b,t)=>a+(b-a)*Math.max(0,Math.min(1,t));
+function px(x,y,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),1,1)}
+function line(x0,y0,x1,y1,c){x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let e=dx+dy;ctx.fillStyle=c;for(let n=0;n<400;n++){ctx.fillRect(x0,y0,1,1);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx}if(e2<=dx){e+=dx;y0+=sy}}}
+function circle(cx,cy,r,c){ctx.fillStyle=c;let x=r,y=0,e=1-r;while(x>=y){[[x,y],[y,x],[-y,x],[-x,y],[-x,-y],[-y,-x],[y,-x],[x,-y]].forEach(([a,b])=>ctx.fillRect(cx+a,cy+b,1,1));y++;if(e<0)e+=2*y+1;else{x--;e+=2*(y-x)+1}}}
+function unitCircle(cx,cy,r,a,showWave){
+  line(cx-r-4,cy,cx+r+4,cy,'#2e2a55');line(cx,cy-r-4,cx,cy+r+4,'#2e2a55');circle(cx,cy,r,'#83769c');
+  const X=cx+Math.round(Math.cos(a)*r),Y=cy-Math.round(Math.sin(a)*r);
+  line(cx,cy,X,Y,'#c2c3c7');line(X,Y,X,cy,'#ff004d');line(cx,cy,X,cy,'#29adff');
+  if(showWave){for(let x=X+1;x<cx+r+6;x+=2)px(x,Y,'#5f574f');
+    for(let i=0;i<=92;i++){px(cx+r+6+i,cy-Math.round(Math.sin(a-i*.075)*r),i===0?'#fff1e8':'#ffec27')}}
+  ctx.fillStyle='#fff1e8';ctx.fillRect(X-1,Y-1,3,3);ctx.fillStyle='#ffec27';ctx.fillRect(X,Y,1,1);
+}
+const boss=()=>BOSSES[G.stage];
+function heroState(now){
+  let x=28,y=58+(Math.floor(now/420)%2),mode=null;const a=S.heroA;
+  if(a){const e=now-a.t0;
+    if(a.type==='enter'){const p=Math.min(1,e/700);x=lerp(-18,28,p);y=58+(Math.floor(e/90)%2);if(p>=1)S.heroA=null}
+    else if(a.type==='attack'){const tg=bossState(now).x-14;if(e<150)x=lerp(28,tg,e/150);else if(e<280)x=tg;else if(e<520)x=lerp(tg,28,(e-280)/240);else S.heroA=null;y=58-(e<280?Math.round(Math.sin(Math.min(1,e/280)*Math.PI)*6):0)}
+    else if(a.type==='hurt'){if(e<440){x=28-(e<140?3:0)+(Math.floor(e/40)%2?1:-1);mode=(Math.floor(e/70)%2)?'red':null}else S.heroA=null}
+    else if(a.type==='win'){y=58-Math.abs(Math.round(Math.sin(e/170)*8))}
+    else if(a.type==='down'){y=60;mode='red'}}
+  return {x,y,mode};
+}
+function bossState(now){
+  const b=boss(),sp=b.sp;let cx=118;const fl=G.stage===3?8:0;
+  let y=GY-sp.h-fl+Math.round(Math.sin(now/360)*(G.stage===3?2.5:1.2));let mode=null,vis=S.bossVis;const a=S.bossA;
+  if(a){const e=now-a.t0;
+    if(a.type==='hurt'){if(e<380){cx+=(Math.floor(e/40)%2?2:-2);mode=(Math.floor(e/60)%2)?'white':null}else S.bossA=null}
+    else if(a.type==='attack'){if(e<220)cx+=Math.round(e/220*4);else if(e<330)cx+=4-Math.round((e-220)/110*10);else if(e<600)cx+=-6+Math.round((e-330)/270*6);else S.bossA=null}
+    else if(a.type==='enter'){const p=Math.min(1,e/650);y-=Math.round((1-p)*70);if(p>=1)S.bossA=null}
+    else if(a.type==='die'){if(e<950){mode=(Math.floor(e/60)%2)?'white':null;cx+=(Math.floor(e/30)%2?1:-1);if(e>550&&Math.floor(e/90)%2)vis=false}
+      else{if(!S.bossDead){S.bossDead=true;S.bossVis=false;explode(cx,y+sp.h/2,['#fff1e8','#ffec27','#ffa300','#ff004d',PAL.g],70);SFX.crit()}vis=false}}}
+  return {x:Math.round(cx-sp.w/2),y,mode,vis,cx,cy:y+sp.h/2};
+}
+function explode(x,y,cols,n){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=.4+Math.random()*1.8;S.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.6,life:0,max:500+Math.random()*500,c:pick(cols),g:.04})}}
+function drawShadow(x,w){ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(Math.round(x+2),GY,Math.round(w-4),2);ctx.fillRect(Math.round(x+4),GY+2,Math.round(w-8),1)}
+function drawProj(p,now){
+  const t=Math.min(1,(now-p.t0)/p.dur);const x=lerp(p.x0,p.x1,t),y=lerp(p.y0,p.y1,t)-Math.sin(t*Math.PI)*(p.kind==='rock'?14:p.kind==='blob'?10:3);
+  if(p.kind==='blob'){ctx.fillStyle='#0b0a18';ctx.fillRect(x-3,y-2,6,5);ctx.fillStyle='#00e436';ctx.fillRect(x-2,y-1,4,3);ctx.fillStyle='#fff1e8';ctx.fillRect(x-1,y-1,1,1)}
+  else if(p.kind==='rock'){ctx.fillStyle='#0b0a18';ctx.fillRect(x-3,y-3,7,6);ctx.fillStyle='#83769c';ctx.fillRect(x-2,y-2,5,4);ctx.fillStyle='#5f574f';ctx.fillRect(x,y,2,1)}
+  else if(p.kind==='fire'){for(let k=1;k<5;k++)px(x+k*3,y+(k%2),k<3?'#ffa300':'#ff004d');ctx.fillStyle='#ff004d';ctx.fillRect(x-3,y-3,6,6);ctx.fillStyle='#ffa300';ctx.fillRect(x-2,y-2,4,4);ctx.fillStyle='#ffec27';ctx.fillRect(x-1,y-1,2,2)}
+  else{circle(Math.round(x),Math.round(y),4,'#ff77a8');ctx.fillStyle='#fff1e8';ctx.fillRect(x-1,y-1,3,3);px(x+6,y-1,'#83769c');px(x+9,y+1,'#83769c')}
+  if(Math.random()<.5)S.parts.push({x,y,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,life:0,max:200,c:p.kind==='orb'?'#ff77a8':p.kind==='fire'?'#ffa300':'#c2c3c7',g:0});
+}
+function updAmb(dt){
+  const th=THEMES[S.theme];if(S.amb.length<18&&Math.random()<.15)S.amb.push({x:Math.random()*160,y:th.ambUp?GY+Math.random()*10:Math.random()*60,ph:Math.random()*6,c:pick(th.amb),life:0,max:3000+Math.random()*3000});
+  S.amb=S.amb.filter(a=>{a.life+=dt;a.ph+=dt/600;a.y+=th.ambUp?-dt*.012:dt*.004;a.x+=Math.sin(a.ph)*.08;return a.life<a.max&&a.y>-2&&a.y<GY+12});
+  S.amb.forEach(a=>{if((a.life/250|0)%5!==4)px(a.x,a.y,a.c)});
+}
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(50,now-last);last=now;
+  ctx.drawImage(BGS[S.theme],0,0);updAmb(dt);
+  if(S.mode==='title'){
+    unitCircle(30,58,15,now/900,true);
+    const h=heroState(now);
+  }else{
+    const b=boss(),bs=bossState(now);
+    if(G.stage===3&&bs.vis)unitCircle(bs.cx,bs.y+11,20,now/700,false);
+    if(bs.vis){drawShadow(bs.x,b.sp.w);ctx.drawImage(bs.mode?b.sp[bs.mode]:b.sp.n,bs.x,bs.y)}
+    const h=heroState(now);drawShadow(h.x,16);ctx.drawImage(h.mode?HERO[h.mode]:HERO.n,Math.round(h.x),Math.round(h.y));
+    S.proj=S.proj.filter(p=>now-p.t0<p.dur);S.proj.forEach(p=>drawProj(p,now));
+    const se=now-S.slashT;if(se<160){const cx=bs.cx,cy=bs.cy;const o=Math.round(se/40);line(cx-10+o,cy-12,cx+8+o,cy+10,'#fff1e8');line(cx-8+o,cy-12,cx+10+o,cy+10,'#ffec27');if(S.crit){line(cx+8,cy-12,cx-10,cy+10,'#fff1e8')}}
+  }
+  S.parts=S.parts.filter(p=>{p.life+=dt;p.x+=p.vx*dt/16;p.y+=p.vy*dt/16;p.vy+=p.g*dt/16;return p.life<p.max});
+  S.parts.forEach(p=>px(p.x,p.y,p.c));
+  tickTimer(now);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- DOM helpers ---------- */
+const screenEl=$('#screen'),panel=$('#panel'),floats=$('#floats'),banner=$('#banner'),timerEl=$('#timer'),timerFill=$('#timerFill');
+const HEART='<svg viewBox="0 0 7 6" shape-rendering="crispEdges" CLS><rect x="1" y="0" width="2" height="1" fill="currentColor"/><rect x="4" y="0" width="2" height="1" fill="currentColor"/><rect x="0" y="1" width="7" height="2" fill="currentColor"/><rect x="1" y="3" width="5" height="1" fill="currentColor"/><rect x="2" y="4" width="3" height="1" fill="currentColor"/><rect x="3" y="5" width="1" height="1" fill="currentColor"/></svg>';
+function floatText(t,x,y,cls=''){const d=document.createElement('div');d.className='float '+cls;d.textContent=t;d.style.left=(x/160*100)+'%';d.style.top=(y/90*100)+'%';floats.appendChild(d);setTimeout(()=>d.remove(),1000)}
+let bannerT=0;
+function showBanner(t,ms=1100,cls=''){banner.textContent=t;banner.className='banner '+cls;banner.hidden=false;banner.style.animation='none';void banner.offsetWidth;banner.style.animation='';clearTimeout(bannerT);if(ms)bannerT=setTimeout(()=>banner.hidden=true,ms)}
+function shake(){screenEl.classList.remove('shake');void screenEl.offsetWidth;screenEl.classList.add('shake')}
+function setScore(){$('#score').textContent=String(G.score).padStart(6,'0')}
+function hud(){
+  $('#hearts').innerHTML=Array.from({length:5},(_,i)=>HEART.replace('CLS',i<G.hearts?'':'class="empty"')).join('');
+  $('#combo').textContent=G.combo>1?`COMBO x${G.combo}`:'';
+  const b=boss();$('#bname').textContent=b.en;const w=Math.max(0,G.bossHp/b.hp*100)+'%';$('#hpFill').style.width=w;$('#hpGhost').style.width=w;
+  setScore();
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let best=0;try{best=+localStorage.getItem('trigquest-best')||0}catch(e){}
+
+/* ---------- Game state ---------- */
+const G={stage:0,hearts:5,score:0,combo:0,bestCombo:0,correct:0,total:0,stCorrect:0,bossHp:0,q:null,qStart:0,qTime:25,phase:'idle',used:new Set(),qn:0};
+
+function tickTimer(now){
+  if(G.phase!=='asking')return;
+  const rem=G.qTime-(now-G.qStart)/1000;const f=Math.max(0,rem/G.qTime);
+  timerFill.style.width=(f*100)+'%';timerEl.classList.toggle('low',f<.3);
+  if(rem<=0)answer(-1);
+}
+function setTimerIdle(){timerEl.classList.remove('low');timerEl.classList.add('idle');timerFill.style.width='100%'}
+
+function renderTitle(){
+  S.mode='title';S.theme=3;$('#logo').hidden=false;$('#hud').hidden=true;banner.hidden=true;setTimerIdle();
+  const icons=BOSSES.map(b=>b.sp.n.toDataURL());
+  panel.innerHTML=`
+   <p class="lead">ตอบโจทย์ตรีโกณมิติให้ถูกเพื่อฟันบอส ตอบเร็วยิ่งแรงและมีโอกาสคริติคอล ตอบผิดหรือหมดเวลาจะโดนบอสสวนกลับ หัวใจหมดคือแพ้</p>
+   <ul class="roster">${BOSSES.map((b,i)=>`<li><img src="${icons[i]}" alt=""><div><div class="st">STAGE ${i+1}</div><b>${b.name}</b><span>${b.topic}</span></div></li>`).join('')}</ul>
+   <div class="howto"><span><b>1–4</b> หรือแตะเพื่อเลือกคำตอบ</span><span><b>Enter</b> ไปต่อ</span><span><b>ตอบถูกติดกัน</b> ได้คอมโบเพิ่มดาเมจ</span></div>
+   <div class="btns"><span class="best">BEST <b>${String(best).padStart(6,'0')}</b></span><button class="btn" data-act="start" data-primary>เริ่มผจญภัย ▶</button></div>`;
+}
+function newGame(){Object.assign(G,{stage:0,hearts:5,score:0,combo:0,bestCombo:0,correct:0,total:0,used:new Set()});setScore();stageIntro()}
+function stageIntro(){
+  const b=boss();G.bossHp=b.hp;G.stCorrect=0;G.qn=0;G.phase='idle';G.combo=0;
+  S.mode='battle';S.theme=G.stage;S.bossVis=true;S.bossDead=false;S.proj=[];S.parts=[];S.amb=[];
+  const now=performance.now();S.heroA={type:'enter',t0:now};S.bossA={type:'enter',t0:now+200};
+  $('#logo').hidden=true;$('#hud').hidden=false;hud();setTimerIdle();
+  showBanner(`STAGE ${G.stage+1}`,1300);
+  stopMusic();startMusic(G.stage);
+  panel.innerHTML=`
+   <div class="tags"><span class="tag">STAGE ${G.stage+1} / 4</span><span class="tag alt">HP ${b.hp}</span></div>
+   <h2>${b.name}<small>${b.en}</small></h2>
+   <p class="lead">หัวข้อ: ${b.topic} · เวลาตอบข้อละ ${b.time} วินาที</p>
+   <div class="scroll"><h3>คัมภีร์ก่อนสู้</h3>${b.tip}</div>
+   <div class="btns"><button class="btn" data-act="fight" data-primary>เริ่มต่อสู้ ▶</button></div>`;
+}
+function genQ(){
+  const gens=GENS[G.stage];let q;
+  for(let i=0;i<25;i++){q=pick(gens)();const key=q.q+'|'+q.choices[q.ans];if(!G.used.has(key)){G.used.add(key);break}}
+  return q;
+}
+function nextQuestion(){
+  const b=boss();G.q=genQ();G.qn++;G.qTime=b.time;
+  const q=G.q;
+  panel.innerHTML=`
+   <div class="tags"><span class="tag">STAGE ${G.stage+1} · ข้อ ${G.qn}</span><span class="tag alt">${b.topic}</span></div>
+   <div class="qbody">${q.fig?'<canvas id="fig" aria-label="รูปสามเหลี่ยมมุมฉาก"></canvas>':''}<p class="qtext">${esc(q.q)}</p></div>
+   <div class="answers">${q.choices.map((c,i)=>`<button class="ans" id="ans${i}" data-act="ans" data-i="${i}"><span class="k">${i+1}</span><span>${esc(c)}</span></button>`).join('')}</div>
+   <div id="fbSlot"></div>
+   <details class="cheat"><summary>เปิดคัมภีร์สูตร</summary><div class="scroll">${b.tip}</div></details>`;
+  if(q.fig){const c=$('#fig');drawFig(c,q.fig);document.fonts&&document.fonts.ready.then(()=>{if(G.q===q&&document.body.contains(c))drawFig(c,q.fig)})}
+  timerEl.classList.remove('idle');G.phase='asking';G.qStart=performance.now();
+}
+function drawFig(cnv,f){
+  const W=184,H=126,dpr=Math.min(2,window.devicePixelRatio||1);cnv.width=W*dpr;cnv.height=H*dpr;cnv.style.width=W+'px';cnv.style.height=H+'px';
+  const c=cnv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const X=v=>f.flip?W-v:v;const A=[X(24),98],C=[X(138),98],B=[X(138),22];
+  c.fillStyle='#1d2b53';c.beginPath();c.moveTo(...A);c.lineTo(...C);c.lineTo(...B);c.closePath();c.fill();
+  c.strokeStyle='#fff1e8';c.lineWidth=3;c.lineJoin='miter';c.stroke();
+  c.strokeStyle='#83769c';c.lineWidth=2;c.beginPath();c.moveTo(X(128),98);c.lineTo(X(128),88);c.lineTo(X(138),88);c.stroke();
+  const a1=Math.atan2(C[1]-A[1],C[0]-A[0]),a2=Math.atan2(B[1]-A[1],B[0]-A[0]);
+  c.strokeStyle='#ffec27';c.lineWidth=2;c.beginPath();if(!f.flip)c.arc(A[0],A[1],20,a2,a1);else c.arc(A[0],A[1],20,a1,a2+Math.PI*2);c.stroke();
+  c.font='16px "Chakra Petch", sans-serif';c.fillStyle='#ffec27';c.textBaseline='middle';c.textAlign=f.flip?'right':'left';c.fillText('θ',A[0]+(f.flip?-25:25),A[1]-8);
+  const lab=(t,x,y,al)=>{if(!t)return;c.font='11px "Press Start 2P", monospace';c.textAlign=al;c.fillStyle=t==='?'?'#ff004d':'#fff1e8';c.fillText(t,x,y)};
+  lab(f.opp,X(146),60,f.flip?'right':'left');
+  lab(f.adj,X(81),114,'center');
+  lab(f.hyp,X(74),50,f.flip?'left':'right');
+}
+function answer(i){
+  if(G.phase!=='asking')return;G.phase='resolving';
+  const now=performance.now(),q=G.q,b=boss();const rem=Math.max(0,G.qTime-(now-G.qStart)/1000),frac=rem/G.qTime;
+  timerEl.classList.remove('low');
+  const ok=i===q.ans;G.total++;
+  document.querySelectorAll('.ans').forEach((el,k)=>{el.disabled=true;if(k===q.ans)el.classList.add('ok');else if(k===i)el.classList.add('bad');else el.classList.add('dim')});
+  let head;
+  if(ok){
+    G.correct++;G.stCorrect++;G.combo++;G.bestCombo=Math.max(G.bestCombo,G.combo);
+    const crit=frac>.6;let dmg=16+Math.round(frac*10)+Math.min(G.combo-1,5)*2;if(crit)dmg=Math.round(dmg*1.5);
+    G.score+=dmg*10+Math.round(frac*100);
+    SFX.ok();S.heroA={type:'attack',t0:now};S.crit=crit;
+    setTimeout(()=>{const bs=bossState(performance.now());S.slashT=performance.now();crit?SFX.crit():SFX.hit();
+      G.bossHp=Math.max(0,G.bossHp-dmg);S.bossA={type:'hurt',t0:performance.now()};explode(bs.cx,bs.cy,['#fff1e8','#ffec27'],crit?18:10);
+      floatText((crit?'CRIT! ':'')+'-'+dmg,bs.cx,bs.y-4,crit?'crit':'');if(crit)shake();hud();
+      if(G.bossHp<=0){S.bossA={type:'die',t0:performance.now()+250};setTimeout(()=>{showBanner('K.O.!',1400,'good');stopMusic();SFX.win()},700)}
+    },150);
+    head=`ถูกต้อง! ${crit?'คริติคอล ':''}ฟัน ${dmg} ดาเมจ${G.combo>1?` · คอมโบ x${G.combo}`:''}`;
+  }else{
+    G.combo=0;SFX.bad();S.bossA={type:'attack',t0:now};
+    setTimeout(()=>{const bs=bossState(performance.now());S.proj.push({t0:performance.now(),dur:280,x0:bs.x,y0:bs.cy,x1:36,y1:64,kind:b.proj})},230);
+    setTimeout(()=>{G.hearts--;SFX.hurt();shake();S.heroA={type:'hurt',t0:performance.now()};explode(36,64,['#ff004d','#fff1e8'],12);floatText('-1 ♥',36,52,'hurt');hud();
+      if(G.hearts<=0){S.heroA={type:'down',t0:performance.now()};stopMusic();setTimeout(()=>{showBanner('GAME OVER',0,'bad');SFX.lose()},400)}},520);
+    head=i<0?'หมดเวลา! บอสสวนกลับ':'ยังไม่ใช่! บอสสวนกลับ';
+  }
+  hud();
+  const dead=ok&&G.bossHp<=0,over=!ok&&G.hearts<=0;
+  const btn=dead?(G.stage===3?'ดูผลการผจญภัย ▶':'ผ่านด่าน ▶'):over?'ดูผล ▶':'ข้อต่อไป ▶';
+  $('#fbSlot').innerHTML=`<div class="fb ${ok?'':'bad'}"><h3>${esc(head)}</h3>
+    ${ok?'':`<p><b>คำตอบที่ถูก:</b> ${esc(q.choices[q.ans])}</p>`}<p>${esc(q.ex)}</p>
+    <div class="row"><button class="btn" data-act="${dead?'clear':over?'over':'next'}" data-primary>${btn}</button></div></div>`;
+  const nb=$('#fbSlot .btn');nb.focus({preventScroll:true});$('#fbSlot').scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function stageClear(){
+  G.phase='idle';setTimerIdle();
+  if(G.stage===3)return victory();
+  const b=boss();const gain=G.hearts<5?1:0;G.hearts+=gain;hud();
+  S.heroA={type:'win',t0:performance.now()};showBanner('STAGE CLEAR',1600,'good');
+  panel.innerHTML=`<h2>ปราบ${b.name}สำเร็จ!<small>${b.en} DEFEATED</small></h2>
+   <div class="stats"><div class="stat"><span>ตอบถูกในด่านนี้</span><b>${G.stCorrect}/${G.qn}</b></div><div class="stat"><span>คอมโบสูงสุด</span><b>x${G.bestCombo}</b></div>
+   <div class="stat"><span>หัวใจ</span><b>${G.hearts}/5${gain?' (+1)':''}</b></div></div>
+   <p class="lead">บอสถัดไป: <b>${BOSSES[G.stage+1].name}</b> คุมหัวข้อ${BOSSES[G.stage+1].topic}</p>
+   <div class="btns"><button class="btn" data-act="nextStage" data-primary>ไปด่านต่อไป ▶</button></div>`;
+}
+function victory(){
+  const acc=G.total?Math.round(G.correct/G.total*100):0;const rank=acc>=90?'S':acc>=75?'A':acc>=60?'B':'C';
+  const isBest=G.score>best;if(isBest){best=G.score;try{localStorage.setItem('trigquest-best',best)}catch(e){}}
+  S.heroA={type:'win',t0:performance.now()};showBanner('VICTORY!',0,'good');
+  panel.innerHTML=`<div class="tags"><span class="tag">ALL STAGES CLEAR</span>${isBest?'<span class="tag alt">NEW BEST</span>':''}</div>
+   <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap"><div class="rank">${rank}</div><h2>ปราสาทตรีโกณมิติแตกแล้ว!<small>THE UNIT CIRCLE IS YOURS</small></h2></div>
+   <div class="stats"><div class="stat"><span>คะแนน</span><b>${String(G.score).padStart(6,'0')}</b></div><div class="stat"><span>ความแม่นยำ</span><b>${acc}%</b></div>
+   <div class="stat"><span>ตอบถูก</span><b>${G.correct}/${G.total}</b></div><div class="stat"><span>คอมโบสูงสุด</span><b>x${G.bestCombo}</b></div></div>
+   <div class="btns"><button class="btn ghost" data-act="home">หน้าแรก</button><button class="btn" data-act="start" data-primary>เล่นอีกครั้ง ▶</button></div>`;
+}
+function gameOver(){
+  G.phase='idle';setTimerIdle();
+  const isBest=G.score>best;if(isBest){best=G.score;try{localStorage.setItem('trigquest-best',best)}catch(e){}}
+  panel.innerHTML=`<h2>หัวใจหมดแล้ว…<small>DEFEATED BY ${boss().en}</small></h2>
+   <p class="lead">ทบทวนคัมภีร์ของด่านนี้แล้วกลับไปลุยใหม่ บอสจะเริ่มด้วย HP เต็ม ส่วนคุณได้หัวใจคืนครบ 5 ดวง</p>
+   <div class="stats"><div class="stat"><span>คะแนน</span><b>${String(G.score).padStart(6,'0')}</b></div><div class="stat"><span>ด่านที่ไปถึง</span><b>${G.stage+1}/4</b></div></div>
+   <div class="scroll"><h3>คัมภีร์: ${boss().topic}</h3>${boss().tip}</div>
+   <div class="btns"><button class="btn ghost" data-act="home">หน้าแรก</button><button class="btn" data-act="retry" data-primary>สู้บอสนี้อีกครั้ง ▶</button></div>`;
+}
+
+panel.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act;
+  if(a!=='ans')SFX.sel();
+  if(a==='start'){initAudio();newGame()}
+  else if(a==='fight'){initAudio();showBanner('FIGHT!',900);nextQuestion()}
+  else if(a==='ans')answer(+t.dataset.i);
+  else if(a==='next'){banner.hidden=true;nextQuestion()}
+  else if(a==='clear')stageClear();
+  else if(a==='nextStage'){G.stage++;stageIntro()}
+  else if(a==='over')gameOver();
+  else if(a==='retry'){G.hearts=5;banner.hidden=true;stageIntro()}
+  else if(a==='home'){stopMusic();renderTitle()}
+});
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='SUMMARY')return;
+  if(G.phase==='asking'){const m={'1':0,'2':1,'3':2,'4':3}[e.key];if(m!==undefined){e.preventDefault();answer(m)}return}
+  if(e.key==='Enter'&&e.target.tagName!=='BUTTON'){const p=panel.querySelector('[data-primary]');if(p){e.preventDefault();p.click()}}
+});
+$('#mute').addEventListener('click',e=>{muted=!muted;if(master)master.gain.value=muted?0:.22;e.currentTarget.textContent=muted?'SOUND OFF':'SOUND ON';e.currentTarget.setAttribute('aria-pressed',muted)});
+
+renderTitle();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
